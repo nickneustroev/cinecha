@@ -58,15 +58,10 @@ const yFormatter = (tick: number) => tick.toString()
 </script>
 
 <template>
-  <div
-    class="mx-auto max-w-3xl space-y-6 rounded-lg"
-    :class="showTitle ? 'p-6' : ''"
+  <ChartsChartWrapper
+    title="Watched This Year"
+    :show-title="showTitle"
   >
-    <div class="flex items-center justify-between">
-      <h3 class="text-lg font-semibold">
-        Watched This Year
-      </h3>
-    </div>
     <BarChart
       :data="chartData"
       :height="300"
@@ -79,5 +74,5 @@ const yFormatter = (tick: number) => tick.toString()
       :y-formatter="yFormatter"
       :legend-position="LegendPosition.TopRight"
     />
-  </div>
+  </ChartsChartWrapper>
 </template>
