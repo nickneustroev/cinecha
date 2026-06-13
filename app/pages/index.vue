@@ -4,6 +4,7 @@
 
 <template>
   <div>
+    <ChartsRatingStackedByYears />
     <ChartsWatchedAllByRating />
     <ChartsWatchedThisYear />
     <ChartsWatchedAllYears />
