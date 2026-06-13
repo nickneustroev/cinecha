@@ -2,5 +2,6 @@ allowBuilds:
   '@parcel/watcher': false
   '@tailwindcss/oxide': false
   esbuild: false
+  maplibre-gl: set this to true or false
   unrs-resolver: false
   vue-demi: false
