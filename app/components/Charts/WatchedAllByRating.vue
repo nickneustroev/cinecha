@@ -12,15 +12,9 @@ withDefaults(
   }
 )
 
-interface RatingEntry {
-  date: string
-  title: string
-  year: number
-  uri: string
-  rating: number
-}
+import type { RatingEntry } from '~/utils/ratings'
 
-const { data: ratingsRaw } = await useFetch<RatingEntry[]>('/data/ratings.json')
+const { data: ratingsRaw } = await useFetch<RatingEntry[]>('/data/ratings.json', { server: false })
 
 const chartData = computed(() => {
   if (!ratingsRaw.value) return []
@@ -28,8 +22,7 @@ const chartData = computed(() => {
   const map = new Map<number, number>()
 
   for (const entry of ratingsRaw.value) {
-    const r = entry.rating
-    map.set(r, (map.get(r) ?? 0) + 1)
+    map.set(entry.rating, (map.get(entry.rating) ?? 0) + 1)
   }
 
   const result: { rating: string; count: number }[] = []

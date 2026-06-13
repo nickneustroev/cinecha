@@ -1,4 +1,7 @@
 <script lang="ts" setup>
+import { monthNames } from '~/utils/watched'
+import type { WatchedEntry } from '~/utils/watched'
+
 defineOptions({
   tags: ['barcharts', 'vertical']
 })
@@ -12,20 +15,11 @@ withDefaults(
   }
 )
 
-interface WatchedEntry {
-  date: string
-  title: string
-  year: number
-  uri: string
-}
-
 const now = new Date()
 const currentYear = now.getFullYear()
 const currentMonth = now.getMonth()
 
-const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-
-const { data: watchedRaw } = await useFetch<WatchedEntry[]>('/data/watched.json')
+const { data: watchedRaw } = await useFetch<WatchedEntry[]>('/data/watched.json', { server: false })
 
 const chartData = computed(() => {
   if (!watchedRaw.value) return []

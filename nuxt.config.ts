@@ -6,7 +6,6 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     'nuxt-charts'
   ],
-  ssr: false,
 
   devtools: {
     enabled: true

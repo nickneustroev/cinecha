@@ -12,16 +12,11 @@ withDefaults(
   }
 )
 
-interface WatchedEntry {
-  date: string
-  title: string
-  year: number
-  uri: string
-}
+import type { WatchedEntry } from '~/utils/watched'
 
-const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-const { data: watchedRaw } = await useFetch<WatchedEntry[]>('/data/watched.json')
+const { data: watchedRaw } = await useFetch<WatchedEntry[]>('/data/watched.json', { server: false })
 
 interface YearMonthEntry {
   label: string
@@ -55,7 +50,7 @@ const chartData = computed(() => {
 
   for (const [key, count] of sorted) {
     const [year, monthNum] = key.split('-')
-    const monthName = monthNames[Number.parseInt(monthNum, 10) - 1]
+    const monthName = shortMonths[Number.parseInt(monthNum, 10) - 1]
     result.push({ label: `${year} ${monthName}`, count })
   }
 
@@ -74,10 +69,7 @@ const yFormatter = (tick: number) => tick.toString()
 </script>
 
 <template>
-  <ChartsChartWrapper
-    title="Watched All Years"
-    :show-title="showTitle"
-  >
+  <ChartsChartWrapper title="Watched All Years" :show-title="showTitle">
     <BarChart
       :data="chartData"
       :height="300"
