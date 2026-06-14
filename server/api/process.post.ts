@@ -6,7 +6,7 @@ const CSV_DIR = join(process.cwd(), 'data', 'letterboxd-nikvkino-2026-06-12-10-1
 const CACHE_PATH = join(process.cwd(), 'data', 'tmdb-cache.json')
 const TMDB_BASE = 'https://api.themoviedb.org/3'
 
-const ENRICH_LIMIT = 50
+const GOOD_RATING_THRESHOLD = 3
 const RATE_LIMIT = 30
 const MIN_INTERVAL = 1000 / RATE_LIMIT
 
@@ -170,7 +170,7 @@ export default defineEventHandler(async (): Promise<ImportData> => {
   const sum = ratings.reduce((acc, entry) => acc + entry.rating, 0)
   if (ratings.length > 0) avgRating = Math.round((sum / ratings.length) * 100) / 100
 
-  console.log(`[process] требуется обогащение данных: для ratings (${ENRICH_LIMIT} шт.)`)
+  console.log(`[process] требуется обогащение данных: для ratings с оценкой ≥ ${GOOD_RATING_THRESHOLD}`)
 
   if (tmdbToken) {
     console.log('[process] доступы к TMDB обнаружены')
@@ -181,7 +181,7 @@ export default defineEventHandler(async (): Promise<ImportData> => {
   let cache: Record<string, any> = {}
   try { cache = JSON.parse(readFileSync(CACHE_PATH, 'utf-8')) } catch { }
 
-  const toEnrich = ratings.slice(0, ENRICH_LIMIT)
+  const toEnrich = ratings.filter(m => m.rating !== null && m.rating >= GOOD_RATING_THRESHOLD)
 
   let cachedCount = 0
   let fetchCount = 0
