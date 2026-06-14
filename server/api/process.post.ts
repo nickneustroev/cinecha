@@ -8,7 +8,11 @@ const TMDB_BASE = 'https://api.themoviedb.org/3'
 
 const GOOD_RATING_THRESHOLD = 3
 const RATE_LIMIT = 30
-const MIN_INTERVAL = 1000 / RATE_LIMIT
+const BATCH_SIZE = 10
+
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
 
 let tmdbToken = ''
 try {
@@ -67,15 +71,11 @@ function toNumber(val: string | null | undefined): number | null {
 
 let lastRequest = 0
 
-function sleep(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms))
-}
-
 async function tmdbFetch(url: string): Promise<any> {
   const now = Date.now()
   const elapsed = now - lastRequest
-  if (elapsed < MIN_INTERVAL) {
-    await sleep(MIN_INTERVAL - elapsed)
+  if (elapsed < 1) {
+    await sleep(1)
   }
   lastRequest = Date.now()
 
@@ -199,45 +199,57 @@ export default defineEventHandler(async (): Promise<ImportData> => {
   } else {
     console.log(`[process] обогащение данных: ${cachedCount} из кэша, ${fetchCount} через TMDB`)
 
-    for (const movie of toEnrich) {
-      if (cache[movie.uri] && cache[movie.uri]._matched !== undefined) continue
+    const toFetch = toEnrich.filter(m => !(cache[m.uri] && cache[m.uri]._matched !== undefined))
+    const batchDelay = Math.ceil((BATCH_SIZE * 2) / RATE_LIMIT * 1000)
 
-      const searchResult = await searchMovie(movie.title, movie.year)
-      if (!searchResult) {
+    for (let i = 0; i < toFetch.length; i += BATCH_SIZE) {
+      const start = Date.now()
+      const batch = toFetch.slice(i, i + BATCH_SIZE)
+
+      const searches = await Promise.all(
+        batch.map(m => searchMovie(m.title, m.year))
+      )
+
+      const details = await Promise.all(
+        searches.map(s => s ? getMovieDetails(s.id) : null)
+      )
+
+      for (let j = 0; j < batch.length; j++) {
+        const movie = batch[j]
+        const searchResult = searches[j]
+        const detail = details[j]
+
+        if (!searchResult || !detail) {
+          cache[movie.uri] = {
+            uri: movie.uri, title: movie.title, year: movie.year,
+            tmdbId: searchResult?.id ?? null, genres: [], poster: null, director: null, _matched: false,
+          }
+          notFound++
+          continue
+        }
+
+        const isExact = searchResult.release_date
+          ? parseInt(searchResult.release_date.split('-')[0], 10) === movie.year
+            && searchResult.title.toLowerCase() === movie.title.toLowerCase()
+          : false
+
         cache[movie.uri] = {
           uri: movie.uri, title: movie.title, year: movie.year,
-          tmdbId: null, genres: [], poster: null, director: null, _matched: false,
+          tmdbId: searchResult.id,
+          genres: detail.genres,
+          poster: detail.poster,
+          director: detail.director,
+          _matched: true,
         }
-        notFound++
-        continue
+
+        if (isExact) exactMatch++
+        else fuzzyMatch++
       }
 
-      const isExact = searchResult.release_date
-        ? parseInt(searchResult.release_date.split('-')[0], 10) === movie.year
-          && searchResult.title.toLowerCase() === movie.title.toLowerCase()
-        : false
-
-      const details = await getMovieDetails(searchResult.id)
-      if (!details) {
-        cache[movie.uri] = {
-          uri: movie.uri, title: movie.title, year: movie.year,
-          tmdbId: searchResult.id, genres: [], poster: null, director: null, _matched: false,
-        }
-        notFound++
-        continue
+      if (i + BATCH_SIZE < toFetch.length) {
+        const elapsed = Date.now() - start
+        await sleep(Math.max(0, batchDelay - elapsed))
       }
-
-      cache[movie.uri] = {
-        uri: movie.uri, title: movie.title, year: movie.year,
-        tmdbId: searchResult.id,
-        genres: details.genres,
-        poster: details.poster,
-        director: details.director,
-        _matched: true,
-      }
-
-      if (isExact) exactMatch++
-      else fuzzyMatch++
     }
 
     console.log(`[process] обогащение завершено: ${exactMatch} точных, ${fuzzyMatch} неточно, ${notFound} не найдено`)
