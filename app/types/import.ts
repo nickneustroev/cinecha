@@ -28,6 +28,8 @@ export interface EnrichedMovie {
   uri: string
   title: string
   year: number
+  dateRated: string | null
+  userRating: number
   tmdbId: number | null
   genres: string[]
   poster: string | null

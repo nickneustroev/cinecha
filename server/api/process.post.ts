@@ -245,7 +245,10 @@ export default defineEventHandler(async (): Promise<ImportData> => {
 
   const enriched: ImportData['enriched'] = []
   for (const movie of toEnrich) {
-    if (cache[movie.uri]) enriched.push(cache[movie.uri])
+    const cached = cache[movie.uri]
+    if (cached) {
+      enriched.push({ ...cached, dateRated: movie.date, userRating: movie.rating })
+    }
   }
 
   try { writeFileSync(CACHE_PATH, JSON.stringify(cache, null, 2), 'utf-8') } catch { }
