@@ -11,10 +11,10 @@ const props = defineProps<{
 }>()
 
 const GENRE_COLORS = [
-  '#3b82f6', '#ef4444', '#22c55e', '#eab308', '#a855f7',
-  '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16',
-  '#06b6d4', '#d946ef', '#0ea5e9', '#10b981', '#f59e0b',
-  '#8b5cf6', '#65a30d', '#0d9488', '#e11d48', '#0284c7',
+  '#2563eb', '#dc2626', '#16a34a', '#ca8a04', '#9333ea',
+  '#db2777', '#0d9488', '#ea580c', '#4f46e5', '#65a30d',
+  '#0891b2', '#c026d3', '#0284c7', '#059669', '#d97706',
+  '#7c3aed', '#4d7c0f', '#0f766e', '#e11d48', '#0369a1',
 ]
 
 const allGenres = computed(() => {
@@ -87,7 +87,7 @@ const yFormatter = (value: number): string => `${value}%`
 
 <template>
   <ChartsChartWrapper
-    title="Genre Share By Years"
+    title="Genre Share By Year Released (from favorite)"
     :show-title="showTitle"
   >
     <AreaChart
@@ -101,6 +101,8 @@ const yFormatter = (value: number): string => `${value}%`
       :curve-type="CurveType.MonotoneX"
       :legend-position="LegendPosition.TopRight"
       :hide-legend="false"
+      legend-style="flex-wrap: wrap; max-width: 100%; margin-bottom: 12px"
+      :y-num-ticks="10"
       :y-grid-line="true"
       :x-grid-line="false"
     />

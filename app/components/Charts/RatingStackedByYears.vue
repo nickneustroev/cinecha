@@ -39,7 +39,7 @@ const yFormatter = (tick: number) => tick.toString()
 
 <template>
   <ChartsChartWrapper
-    title="Rating Stacked By Years"
+    title="Rating Stacked By Year Released"
     :show-title="showTitle"
   >
     <BarChart
