@@ -126,6 +126,8 @@ async function getMovieDetails(tmdbId: number) {
 }
 
 export default defineEventHandler(async (): Promise<ImportData> => {
+  console.log('[process] подготовка данных началась')
+
   const rawDiary = parseCSVFile('diary.csv')
   const rawRatings = parseCSVFile('ratings.csv')
   const rawWatched = parseCSVFile('watched.csv')
@@ -156,6 +158,8 @@ export default defineEventHandler(async (): Promise<ImportData> => {
     uri: e['Letterboxd URI'] || null
   }))
 
+  console.log(`[process] csv прочитаны в json: diary ${diary.length}, ratings ${ratings.length}, watched ${watched.length}`)
+
   const allTitles = new Set<string>()
   for (const entry of ratings) if (entry.title) allTitles.add(entry.title)
   for (const entry of watched) if (entry.title) allTitles.add(entry.title)
@@ -165,40 +169,77 @@ export default defineEventHandler(async (): Promise<ImportData> => {
   const sum = ratings.reduce((acc, entry) => acc + entry.rating, 0)
   if (ratings.length > 0) avgRating = Math.round((sum / ratings.length) * 100) / 100
 
+  console.log(`[process] требуется обогащение данных: для ratings (${ENRICH_LIMIT} шт.)`)
+
+  if (tmdbToken) {
+    console.log('[process] доступы к TMDB обнаружены')
+  } else {
+    console.log('[process] TMDB токен не найден, обогащение пропущено')
+  }
+
   let cache: Record<string, any> = {}
   try { cache = JSON.parse(readFileSync(CACHE_PATH, 'utf-8')) } catch { }
 
   const toEnrich = ratings.slice(0, ENRICH_LIMIT)
 
+  let cachedCount = 0
+  let fetchCount = 0
   for (const movie of toEnrich) {
-    if (cache[movie.uri] && cache[movie.uri]._matched !== undefined) continue
+    if (cache[movie.uri] && cache[movie.uri]._matched !== undefined) cachedCount++
+    else fetchCount++
+  }
 
-    const searchResult = await searchMovie(movie.title, movie.year)
-    if (!searchResult) {
+  let exactMatch = 0
+  let fuzzyMatch = 0
+  let notFound = 0
+
+  if (fetchCount === 0) {
+    console.log(`[process] обогащение данных: ${cachedCount} из кэша`)
+  } else {
+    console.log(`[process] обогащение данных: ${cachedCount} из кэша, ${fetchCount} через TMDB`)
+
+    for (const movie of toEnrich) {
+      if (cache[movie.uri] && cache[movie.uri]._matched !== undefined) continue
+
+      const searchResult = await searchMovie(movie.title, movie.year)
+      if (!searchResult) {
+        cache[movie.uri] = {
+          uri: movie.uri, title: movie.title, year: movie.year,
+          tmdbId: null, genres: [], poster: null, director: null, _matched: false,
+        }
+        notFound++
+        continue
+      }
+
+      const isExact = searchResult.release_date
+        ? parseInt(searchResult.release_date.split('-')[0], 10) === movie.year
+          && searchResult.title.toLowerCase() === movie.title.toLowerCase()
+        : false
+
+      const details = await getMovieDetails(searchResult.id)
+      if (!details) {
+        cache[movie.uri] = {
+          uri: movie.uri, title: movie.title, year: movie.year,
+          tmdbId: searchResult.id, genres: [], poster: null, director: null, _matched: false,
+        }
+        notFound++
+        continue
+      }
+
       cache[movie.uri] = {
         uri: movie.uri, title: movie.title, year: movie.year,
-        tmdbId: null, genres: [], poster: null, director: null, _matched: false,
+        tmdbId: searchResult.id,
+        genres: details.genres,
+        poster: details.poster,
+        director: details.director,
+        _matched: true,
       }
-      continue
+
+      if (isExact) exactMatch++
+      else fuzzyMatch++
     }
 
-    const details = await getMovieDetails(searchResult.id)
-    if (!details) {
-      cache[movie.uri] = {
-        uri: movie.uri, title: movie.title, year: movie.year,
-        tmdbId: searchResult.id, genres: [], poster: null, director: null, _matched: false,
-      }
-      continue
-    }
-
-    cache[movie.uri] = {
-      uri: movie.uri, title: movie.title, year: movie.year,
-      tmdbId: searchResult.id,
-      genres: details.genres,
-      poster: details.poster,
-      director: details.director,
-      _matched: true,
-    }
+    console.log(`[process] обогащение завершено: ${exactMatch} точных, ${fuzzyMatch} неточно, ${notFound} не найдено`)
   }
 
   const enriched: ImportData['enriched'] = []
@@ -207,6 +248,8 @@ export default defineEventHandler(async (): Promise<ImportData> => {
   }
 
   try { writeFileSync(CACHE_PATH, JSON.stringify(cache, null, 2), 'utf-8') } catch { }
+
+  console.log('[process] данные готовы, передаем на фронтенд')
 
   return {
     ratings,
