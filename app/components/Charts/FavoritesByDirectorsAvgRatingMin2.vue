@@ -54,7 +54,7 @@ const yFormatter = (_tick: string, i?: number) => {
 
 <template>
   <ChartsChartWrapper
-    title="Top-15 directors by avg rating min 2 (from favorite)"
+    title="Top-30 directors by avg rating min 2 (from favorite)"
     :show-title="showTitle"
   >
     <BarChart

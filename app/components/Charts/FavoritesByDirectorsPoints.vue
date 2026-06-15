@@ -10,23 +10,24 @@ const props = defineProps<{
   showTitle?: boolean
 }>()
 
+const BOOST = 1
+
 const chartData = computed(() => {
   if (!props.data.length) return []
 
-  const ratingMap = new Map<string, number[]>()
+  const pointsMap = new Map<string, number>()
   for (const movie of props.data) {
     if (!movie.director) continue
-    const ratings = ratingMap.get(movie.director) ?? []
-    ratings.push(movie.userRating)
-    ratingMap.set(movie.director, ratings)
+    const current = pointsMap.get(movie.director) ?? 0
+    pointsMap.set(movie.director, current + (movie.userRating * BOOST) ** 2)
   }
 
-  return Array.from(ratingMap.entries())
-    .map(([director, ratings]) => ({
+  return Array.from(pointsMap.entries())
+    .map(([director, points]) => ({
       director,
-      avgRating: ratings.reduce((s, r) => s + r, 0) / ratings.length
+      points
     }))
-    .sort((a, b) => b.avgRating - a.avgRating)
+    .sort((a, b) => b.points - a.points)
     .slice(0, 30)
     .reverse()
 })
@@ -38,13 +39,13 @@ const xAxisConfig = {
 const yAxisConfig = {} as const
 
 const chartCategories = computed(() => ({
-  avgRating: {
-    name: 'Avg Rating',
+  points: {
+    name: 'Points',
     color: '#6366f1'
   }
 }))
 
-const xFormatter = (tick: number) => tick.toFixed(2)
+const xFormatter = (tick: number) => String(tick)
 const yFormatter = (_tick: string, i?: number) => {
   const idx = i ?? 0
   return chartData.value[idx]?.director ?? String(_tick)
@@ -53,7 +54,7 @@ const yFormatter = (_tick: string, i?: number) => {
 
 <template>
   <ChartsChartWrapper
-    title="Top-30 directors by avg rating w/out min (from favorite)"
+    title="Top-30 directors points (from favorite)"
     :show-title="showTitle"
   >
     <BarChart
@@ -61,7 +62,7 @@ const yFormatter = (_tick: string, i?: number) => {
       orientation="horizontal"
       :height="500"
       :categories="chartCategories"
-      :y-axis="['avgRating']"
+      :y-axis="['points']"
       :y-num-ticks="chartData.length"
       :radius="4"
       :x-grid-line="true"

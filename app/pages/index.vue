@@ -36,6 +36,7 @@ onMounted(async () => {
 
     <template v-if="data">
       <ChartsTop20DirectorsByPoints :data="data.enriched" />
+      <ChartsFavoritesByDirectorsPoints :data="data.enriched" />
       <ChartsFavoritesByGenres :data="data.enriched" />
       <ChartsFavoritesByDirectors :data="data.enriched" />
       <ChartsFavoritesByDirectorsAvgRating :data="data.enriched" />
