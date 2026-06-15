@@ -98,19 +98,25 @@ async function searchMovie(title: string, year: number): Promise<any> {
   )
   if (!data?.results?.length) return null
 
-  const exact = data.results.find((r: any) => {
-    const rYear = r.release_date ? parseInt(r.release_date.split('-')[0], 10) : null
-    return rYear === year && r.title.toLowerCase() === title.toLowerCase()
-  })
-  if (exact) return exact
+  const byPop = (a: any, b: any) => (b.popularity ?? 0) - (a.popularity ?? 0)
 
-  const yearMatch = data.results.find((r: any) => {
-    const rYear = r.release_date ? parseInt(r.release_date.split('-')[0], 10) : null
-    return rYear && Math.abs(rYear - year) <= 1
-  })
-  if (yearMatch) return yearMatch
+  const exact = data.results
+    .filter((r: any) => {
+      const rYear = r.release_date ? parseInt(r.release_date.split('-')[0], 10) : null
+      return rYear === year && r.title.toLowerCase() === title.toLowerCase()
+    })
+    .sort(byPop)
+  if (exact.length) return exact[0]
 
-  return data.results[0]
+  const yearMatch = data.results
+    .filter((r: any) => {
+      const rYear = r.release_date ? parseInt(r.release_date.split('-')[0], 10) : null
+      return rYear && Math.abs(rYear - year) <= 1
+    })
+    .sort(byPop)
+  if (yearMatch.length) return yearMatch[0]
+
+  return data.results.sort(byPop)[0]
 }
 
 async function getMovieDetails(tmdbId: number) {
