@@ -24,7 +24,6 @@ interface DirectorCard {
   movies: { title: string, year: number, userRating: number }[]
 }
 
-const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w185'
 
 const cards = computed(() => {
   if (!props.data.length) return []
@@ -66,34 +65,13 @@ const cards = computed(() => {
       {{ props.title ?? `Top-${props.limit} Directors by Highest Movie Rating` }}
     </h3>
     <UPageGrid :ui="{ base: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4' }">
-      <UCard
+      <SimpleCard
         v-for="(card, index) in cards"
         :key="index"
-        :ui="{ header: 'flex items-center gap-3' }"
+        :photo="card.photo"
+        :name="card.director"
+        :description="`Highest: ${card.maxRating}`"
       >
-        <template #header>
-          <NuxtImg
-            v-if="card.photo"
-            :src="`${TMDB_IMG_BASE}${card.photo}`"
-            :alt="card.director"
-            class="h-14 w-10 rounded object-cover shrink-0"
-          />
-          <div
-            v-else
-            class="h-14 w-10 rounded bg-accented flex items-center justify-center text-[10px] text-muted leading-tight text-center shrink-0"
-          >
-            No<br>photo
-          </div>
-          <div class="min-w-0">
-            <div class="text-xl text-default font-semibold">
-              {{ card.director }}
-            </div>
-            <div class="mt-1 text-muted text-base">
-              Highest: {{ card.maxRating }}
-            </div>
-          </div>
-        </template>
-
         <ul class="list-inside list-disc">
           <li
             v-for="(movie, mi) in card.movies"
@@ -102,7 +80,7 @@ const cards = computed(() => {
             {{ movie.title }} <span class="text-muted">({{ movie.year }}) · {{ movie.userRating }}</span>
           </li>
         </ul>
-      </UCard>
+      </SimpleCard>
     </UPageGrid>
 
     <div

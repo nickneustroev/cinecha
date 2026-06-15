@@ -29,6 +29,15 @@ export default defineAppConfig({
         description: 'mt-1 text-muted text-base'
       }
     },
+    card: {
+      slots: {
+        header: 'p-4 sm:px-4',
+        title: 'text-xl text-default font-semibold',
+        description: 'mt-1 text-muted text-base',
+        body: 'p-4 sm:p-4',
+        footer: 'p-4 sm:px-4'
+      }
+    },
     button: {
       slots: {
         base: 'rounded-full cursor-pointer'
