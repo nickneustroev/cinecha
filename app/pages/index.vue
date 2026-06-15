@@ -36,6 +36,11 @@ onMounted(async () => {
 
     <template v-if="data">
       <div class="flex flex-col gap-y-8">
+        <h3 class="text-2xl font-semibold">
+          Top-8 Movies by Rating
+        </h3>
+        <ChartsTopMoviesByRating :data="data.enriched" :import-date="data.stats.importDate" />
+
         <ChartsTopDirectorsByPointsCards
           :data="data.enriched"
           :limit="8"

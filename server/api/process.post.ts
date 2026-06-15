@@ -268,6 +268,9 @@ export default defineEventHandler(async (): Promise<ImportData> => {
 
   try { writeFileSync(CACHE_PATH, JSON.stringify(cache, null, 2), 'utf-8') } catch { }
 
+  const allDates = [...ratings.map(r => r.date), ...watched.map(w => w.date), ...diary.map(d => d.date)].filter(Boolean).sort() as string[]
+  const importDate = allDates.length > 0 ? allDates[0] : null
+
   console.log('[process] данные готовы, передаем на фронтенд')
 
   return {
@@ -279,7 +282,8 @@ export default defineEventHandler(async (): Promise<ImportData> => {
       totalWatched: watched.length,
       totalDiary: diary.length,
       uniqueTitles: allTitles.size,
-      avgRating
+      avgRating,
+      importDate
     },
     enriched
   }

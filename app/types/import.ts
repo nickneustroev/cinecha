@@ -48,5 +48,6 @@ export interface ImportData {
     totalDiary: number
     uniqueTitles: number
     avgRating: number | null
+    importDate: string | null
   }
 }
