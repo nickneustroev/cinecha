@@ -48,19 +48,20 @@ const chartCategories = computed(() => ({
 const xFormatter = (tick: number) => String(tick)
 const yFormatter = (_tick: string, i?: number) => {
   const idx = i ?? 0
-  return chartData.value[idx]?.director ?? String(_tick)
+  const d = chartData.value[idx]
+  return d ? `${d.director} (${Math.round(d.points)})` : String(_tick)
 }
 </script>
 
 <template>
   <ChartsChartWrapper
-    title="Top-30 directors points (from favorite)"
+    title="Top-30 directors by points (from favorite)"
     :show-title="showTitle"
   >
     <BarChart
       :data="chartData"
       orientation="horizontal"
-      :height="500"
+      :height="600"
       :categories="chartCategories"
       :y-axis="['points']"
       :y-num-ticks="chartData.length"
