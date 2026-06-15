@@ -4,11 +4,16 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
+    '@nuxt/image',
     'nuxt-charts'
   ],
 
   devtools: {
     enabled: true
+  },
+
+  image: {
+    domains: ['image.tmdb.org']
   },
 
   css: ['~/assets/css/main.css'],

@@ -27,20 +27,24 @@ const props = defineProps<{
 
 interface DirectorCard {
   director: string
+  photo: string | null
   maxRating: number
   topCount: number
   topMaxYear: number
   movies: { title: string; year: number; userRating: number }[]
 }
 
+const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w185'
+
 const cards = computed(() => {
   if (!props.data.length) return []
 
-  const map = new Map<string, { maxRating: number; movies: { title: string; year: number; userRating: number }[] }>()
+  const map = new Map<string, { photo: string | null; maxRating: number; movies: { title: string; year: number; userRating: number }[] }>()
 
   for (const movie of props.data) {
     for (const d of movie.directors) {
-      const entry = map.get(d.name) ?? { maxRating: 0, movies: [] }
+      const entry = map.get(d.name) ?? { photo: d.photo, maxRating: 0, movies: [] }
+      if (!entry.photo) entry.photo = d.photo
       entry.movies.push({ title: movie.title, year: movie.year, userRating: movie.userRating })
       if (movie.userRating > entry.maxRating) {
         entry.maxRating = movie.userRating
@@ -54,6 +58,7 @@ const cards = computed(() => {
       const topMovies = entry.movies.filter(m => m.userRating === entry.maxRating)
       return {
         director,
+        photo: entry.photo,
         maxRating: entry.maxRating,
         topCount: topMovies.length,
         topMaxYear: Math.max(...topMovies.map(m => m.year)),
@@ -76,11 +81,21 @@ const cards = computed(() => {
         :key="index"
       >
         <template #body>
-          <div :class="pageCardUi.title()">
-            {{ card.director }}
-          </div>
-          <div :class="pageCardUi.description()">
-            Highest: {{ card.maxRating }}
+          <div class="flex items-center gap-3">
+            <NuxtImg
+              v-if="card.photo"
+              :src="`${TMDB_IMG_BASE}${card.photo}`"
+              :alt="card.director"
+              class="h-14 w-10 rounded object-cover"
+            />
+            <div class="min-w-0">
+              <div :class="pageCardUi.title()">
+                {{ card.director }}
+              </div>
+              <div :class="pageCardUi.description()">
+                Highest: {{ card.maxRating }}
+              </div>
+            </div>
           </div>
           <ul class="mt-2 list-inside list-disc">
             <li

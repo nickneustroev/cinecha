@@ -78,7 +78,7 @@ const cards = computed(() => {
       >
         <template #body>
           <div class="flex items-center gap-3">
-            <img
+            <NuxtImg
               v-if="card.photo"
               :src="`${TMDB_IMG_BASE}${card.photo}`"
               :alt="card.director"
