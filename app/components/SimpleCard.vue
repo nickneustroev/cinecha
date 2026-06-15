@@ -4,7 +4,7 @@ const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w185'
 defineProps<{
   photo: string | null
   name: string
-  description: string
+  description?: string
   descriptionTitle?: string
 }>()
 </script>

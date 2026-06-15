@@ -44,10 +44,6 @@ export default defineAppConfig({
       }
     },
     user: {
-      slots: {
-        root: 'bg-elevated rounded-full pe-3',
-        name: 'font-thin'
-      },
       variants: {
         to: {
           false: {
