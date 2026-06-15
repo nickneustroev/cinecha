@@ -19,7 +19,7 @@ const chartData = computed(() => {
     map.set(entry.rating, (map.get(entry.rating) ?? 0) + 1)
   }
 
-  const result: { rating: string; count: number }[] = []
+  const result: { rating: string, count: number }[] = []
 
   for (let r = 0.5; r <= 5; r += 0.5) {
     result.push({ rating: r.toString(), count: map.get(r) ?? 0 })
@@ -37,10 +37,25 @@ const chartCategories = computed(() => ({
 
 const xFormatter = (i: number): string => chartData.value[i]?.rating ?? ''
 const yFormatter = (tick: number) => tick.toString()
+
+const chartOptions = {
+  valueLabel: {
+    label: (d: { y: number }) => d.y.toString(),
+    labelSpacing: 30,
+    labelFontSize: 14,
+    color: 'var(--ui-text)'
+  },
+  xAxis: 'rating' as keyof { rating: string, count: number },
+  groupPadding: 0,
+  barPadding: 0.2
+}
 </script>
 
 <template>
-  <ChartsChartWrapper title="Watched All By Rating" :show-title="showTitle">
+  <ChartsChartWrapper
+    title="Watched All By Rating"
+    :show-title="showTitle"
+  >
     <BarChart
       :data="chartData"
       :height="300"
@@ -52,6 +67,7 @@ const yFormatter = (tick: number) => tick.toString()
       :x-formatter="xFormatter"
       :y-formatter="yFormatter"
       :legend-position="LegendPosition.TopRight"
+      v-bind="chartOptions"
     />
   </ChartsChartWrapper>
 </template>

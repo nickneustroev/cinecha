@@ -60,10 +60,25 @@ const chartCategories = computed(() => ({
 
 const xFormatter = (i: number): string => chartData.value[i]?.label ?? ''
 const yFormatter = (tick: number) => tick.toString()
+
+const chartOptions = {
+  valueLabel: {
+    label: (d: { y: number }) => d.y.toString(),
+    labelSpacing: 2,
+    labelFontSize: 14,
+    color: 'var(--ui-text)'
+  },
+  xAxis: 'label' as keyof YearMonthEntry,
+  groupPadding: 0,
+  barPadding: 0.2
+}
 </script>
 
 <template>
-  <ChartsChartWrapper title="All Movies Count By Month Watched" :show-title="showTitle">
+  <ChartsChartWrapper
+    title="All Movies Count By Month Watched"
+    :show-title="showTitle"
+  >
     <BarChart
       :data="chartData"
       :height="300"
@@ -75,6 +90,7 @@ const yFormatter = (tick: number) => tick.toString()
       :x-formatter="xFormatter"
       :y-formatter="yFormatter"
       :legend-position="LegendPosition.TopRight"
+      v-bind="chartOptions"
     />
   </ChartsChartWrapper>
 </template>
