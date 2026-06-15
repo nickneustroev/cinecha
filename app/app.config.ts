@@ -51,7 +51,7 @@ export default defineAppConfig({
       variants: {
         to: {
           false: {
-            name: '',
+            name: 'text-toned',
             description: ''
           }
         }

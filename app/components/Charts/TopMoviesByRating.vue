@@ -32,7 +32,7 @@ const cards = computed(() =>
       :name="movie.title"
       :description="`Rating: ${movie.userRating}`"
     >
-      <div class="flex gap-4">
+      <div class="flex flex-wrap gap-x-3 gap-y-2">
         <UUser
           v-for="d in movie.directors"
           :key="d.name"
