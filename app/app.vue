@@ -28,16 +28,21 @@ useSeoMeta({
   <UApp>
     <UHeader>
       <template #left>
-        <NuxtLink to="/">
-          <AppLogo class="w-auto h-6 shrink-0" />
-        </NuxtLink>
+        <div class="flex items-center gap-6">
+          <NuxtLink
+            to="/"
+            class="text-xl font-bold shrink-0"
+          >
+            Cinecha
+          </NuxtLink>
 
-        <UNavigationMenu
-          :items="[
-            { label: 'Home', to: '/' },
-            { label: 'Directors', to: '/directors' }
-          ]"
-        />
+          <UNavigationMenu
+            :items="[
+              { label: 'Home', to: '/' },
+              { label: 'Directors', to: '/directors' }
+            ]"
+          />
+        </div>
       </template>
 
       <template #right>
