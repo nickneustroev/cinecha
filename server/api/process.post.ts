@@ -118,10 +118,11 @@ async function getMovieDetails(tmdbId: number) {
     `${TMDB_BASE}/movie/${tmdbId}?append_to_response=credits&language=en-US`
   )
   if (!data) return null
+  const directors = data.credits?.crew?.filter((c: any) => c.job === 'Director') || []
   return {
     genres: data.genres?.map((g: any) => g.name) || [],
     poster: data.poster_path || null,
-    director: data.credits?.crew?.find((c: any) => c.job === 'Director')?.name || null,
+    directors: directors.map((d: any) => ({ name: d.name, photo: d.profile_path || null })),
   }
 }
 
@@ -222,7 +223,7 @@ export default defineEventHandler(async (): Promise<ImportData> => {
         if (!searchResult || !detail) {
           cache[movie.uri] = {
             uri: movie.uri, title: movie.title, year: movie.year,
-            tmdbId: searchResult?.id ?? null, genres: [], poster: null, director: null, _matched: false,
+            tmdbId: searchResult?.id ?? null, genres: [], poster: null, directors: [], _matched: false,
           }
           notFound++
           continue
@@ -238,7 +239,7 @@ export default defineEventHandler(async (): Promise<ImportData> => {
           tmdbId: searchResult.id,
           genres: detail.genres,
           poster: detail.poster,
-          director: detail.director,
+          directors: detail.directors,
           _matched: true,
         }
 

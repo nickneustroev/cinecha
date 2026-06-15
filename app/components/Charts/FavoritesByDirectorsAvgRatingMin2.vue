@@ -15,10 +15,11 @@ const chartData = computed(() => {
 
   const ratingMap = new Map<string, number[]>()
   for (const movie of props.data) {
-    if (!movie.director) continue
-    const ratings = ratingMap.get(movie.director) ?? []
-    ratings.push(movie.userRating)
-    ratingMap.set(movie.director, ratings)
+    for (const d of movie.directors) {
+      const ratings = ratingMap.get(d.name) ?? []
+      ratings.push(movie.userRating)
+      ratingMap.set(d.name, ratings)
+    }
   }
 
   return Array.from(ratingMap.entries())

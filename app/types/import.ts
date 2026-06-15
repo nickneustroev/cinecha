@@ -33,7 +33,7 @@ export interface EnrichedMovie {
   tmdbId: number | null
   genres: string[]
   poster: string | null
-  director: string | null
+  directors: { name: string; photo: string | null }[]
   _matched: boolean
 }
 

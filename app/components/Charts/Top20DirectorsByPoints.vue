@@ -40,12 +40,13 @@ const cards = computed(() => {
   const map = new Map<string, { count: number, points: number, movies: { title: string, year: number, userRating: number }[] }>()
 
   for (const movie of props.data) {
-    if (!movie.director) continue
-    const entry = map.get(movie.director) ?? { count: 0, points: 0, movies: [] }
-    entry.count++
-    entry.points += (movie.userRating * BOOST) ** 2
-    entry.movies.push({ title: movie.title, year: movie.year, userRating: movie.userRating })
-    map.set(movie.director, entry)
+    for (const d of movie.directors) {
+      const entry = map.get(d.name) ?? { count: 0, points: 0, movies: [] }
+      entry.count++
+      entry.points += (movie.userRating * BOOST) ** 2
+      entry.movies.push({ title: movie.title, year: movie.year, userRating: movie.userRating })
+      map.set(d.name, entry)
+    }
   }
 
   return Array.from(map.entries())

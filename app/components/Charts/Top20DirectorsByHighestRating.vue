@@ -39,13 +39,14 @@ const cards = computed(() => {
   const map = new Map<string, { maxRating: number; movies: { title: string; year: number; userRating: number }[] }>()
 
   for (const movie of props.data) {
-    if (!movie.director) continue
-    const entry = map.get(movie.director) ?? { maxRating: 0, movies: [] }
-    entry.movies.push({ title: movie.title, year: movie.year, userRating: movie.userRating })
-    if (movie.userRating > entry.maxRating) {
-      entry.maxRating = movie.userRating
+    for (const d of movie.directors) {
+      const entry = map.get(d.name) ?? { maxRating: 0, movies: [] }
+      entry.movies.push({ title: movie.title, year: movie.year, userRating: movie.userRating })
+      if (movie.userRating > entry.maxRating) {
+        entry.maxRating = movie.userRating
+      }
+      map.set(d.name, entry)
     }
-    map.set(movie.director, entry)
   }
 
   return Array.from(map.entries())

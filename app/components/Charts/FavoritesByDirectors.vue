@@ -21,8 +21,9 @@ const chartData = computed(() => {
   const map = new Map<string, number>()
 
   for (const movie of props.data) {
-    if (!movie.director) continue
-    map.set(movie.director, (map.get(movie.director) ?? 0) + 1)
+    for (const d of movie.directors) {
+      map.set(d.name, (map.get(d.name) ?? 0) + 1)
+    }
   }
 
   return Array.from(map.entries())

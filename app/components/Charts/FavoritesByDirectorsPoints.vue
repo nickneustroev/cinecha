@@ -17,9 +17,10 @@ const chartData = computed(() => {
 
   const pointsMap = new Map<string, number>()
   for (const movie of props.data) {
-    if (!movie.director) continue
-    const current = pointsMap.get(movie.director) ?? 0
-    pointsMap.set(movie.director, current + (movie.userRating * BOOST) ** 2)
+    for (const d of movie.directors) {
+      const current = pointsMap.get(d.name) ?? 0
+      pointsMap.set(d.name, current + (movie.userRating * BOOST) ** 2)
+    }
   }
 
   return Array.from(pointsMap.entries())
