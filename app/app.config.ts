@@ -38,6 +38,12 @@ export default defineAppConfig({
         footer: 'p-4 sm:px-4'
       }
     },
+    tabs: {
+      slots: {
+        trigger: 'cursor-pointer'
+      }
+    },
+
     button: {
       slots: {
         base: 'rounded-full cursor-pointer'

@@ -59,7 +59,7 @@ useSeoMeta({
       </template>
     </UHeader>
 
-    <UMain class="bg-elevated">
+    <UMain class="bg-accented">
       <NuxtPage />
     </UMain>
 
