@@ -1,20 +1,5 @@
 <script setup lang="ts">
-import { tv } from '@nuxt/ui/utils/tv'
 import type { EnrichedMovie } from '~/types/import'
-import theme from '#build/ui/page-card'
-
-const appConfig = useAppConfig()
-const pageCardUi = computed(() =>
-  tv({ extend: tv(theme), ...appConfig.ui?.pageCard || {} })({
-    orientation: 'vertical',
-    reverse: false,
-    variant: 'outline',
-    to: false,
-    title: false,
-    highlight: false,
-    spotlight: false
-  })
-)
 
 defineOptions({
   tags: ['cards', 'page']
@@ -81,46 +66,46 @@ const cards = computed(() => {
       {{ title ?? `Top-${limit} Directors by Points` }}
     </h3>
     <UPageGrid :ui="{ base: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4' }">
-      <UPageCard
+      <UCard
         v-for="(card, index) in cards"
         :key="index"
+        :ui="{ header: 'flex items-center gap-3' }"
       >
-        <template #body>
-          <div class="flex items-center gap-3">
-            <NuxtImg
-              v-if="card.photo"
-              :src="`${TMDB_IMG_BASE}${card.photo}`"
-              :alt="card.director"
-              class="h-14 w-10 rounded object-cover"
-            />
-            <div
-              v-else
-              class="h-14 w-10 rounded bg-accented flex items-center justify-center text-[10px] text-muted leading-tight text-center"
-            >
-              No<br>photo
+        <template #header>
+          <NuxtImg
+            v-if="card.photo"
+            :src="`${TMDB_IMG_BASE}${card.photo}`"
+            :alt="card.director"
+            class="h-14 w-10 rounded object-cover shrink-0"
+          />
+          <div
+            v-else
+            class="h-14 w-10 rounded bg-accented flex items-center justify-center text-[10px] text-muted leading-tight text-center shrink-0"
+          >
+            No<br>photo
+          </div>
+          <div class="min-w-0">
+            <div class="text-xl text-default font-semibold">
+              {{ card.director }}
             </div>
-            <div class="min-w-0">
-              <div :class="pageCardUi.title()">
-                {{ card.director }}
-              </div>
-              <div
-                :class="pageCardUi.description()"
-                :title="card.pointsBreakdown"
-              >
-                Points: {{ card.points }}
-              </div>
+            <div
+              class="mt-1 text-muted text-base"
+              :title="card.pointsBreakdown"
+            >
+              Points: {{ card.points }}
             </div>
           </div>
-          <ul class="mt-2 list-inside list-disc">
-            <li
-              v-for="(movie, mi) in card.movies"
-              :key="mi"
-            >
-              {{ movie.title }} <span class="text-muted">({{ movie.year }}) · {{ movie.userRating }}</span>
-            </li>
-          </ul>
         </template>
-      </UPageCard>
+
+        <ul class="list-inside list-disc">
+          <li
+            v-for="(movie, mi) in card.movies"
+            :key="mi"
+          >
+            {{ movie.title }} <span class="text-muted">({{ movie.year }}) · {{ movie.userRating }}</span>
+          </li>
+        </ul>
+      </UCard>
     </UPageGrid>
 
     <div
