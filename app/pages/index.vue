@@ -7,7 +7,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <UContainer>
+  <UContainer class="bg-muted border-x border-muted">
     <div
       v-if="status !== 'loading'"
       class="flex justify-center py-12"
