@@ -50,14 +50,16 @@ onMounted(async () => {
           link="/movies?tab=last-watched"
         />
 
-        <ChartsTopDirectorsByPointsCards
+        <ChartsDirectorsGrid
           :data="data.enriched"
           :limit="8"
+          sort-by="points"
           link="/directors?tab=points"
         />
-        <ChartsTopDirectorsByHighestRatingCards
+        <ChartsDirectorsGrid
           :data="data.enriched"
           :limit="8"
+          sort-by="highestMovieRating"
           link="/directors?tab=highest"
         />
         <ChartsFavoritesByGenres :data="data.enriched" />

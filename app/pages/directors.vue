@@ -44,17 +44,19 @@ watch(activeTab, (tab) => {
       />
 
       <div class="flex flex-col gap-y-8 pt-8">
-        <ChartsTopDirectorsByPointsCards
+        <ChartsDirectorsGrid
           v-if="activeTab === 'points'"
           :data="data.enriched"
           title="Top-100 Directors by Points"
           :limit="100"
+          sort-by="points"
         />
-        <ChartsTopDirectorsByHighestRatingCards
+        <ChartsDirectorsGrid
           v-if="activeTab === 'highest'"
           :data="data.enriched"
           title="Top-100 Directors by Highest Movie Rating"
           :limit="100"
+          sort-by="highestMovieRating"
         />
       </div>
     </template>
