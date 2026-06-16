@@ -155,18 +155,19 @@ async function onFileSelect(file: File | null | undefined) {
       </div>
     </div>
 
-    <div
+    <UCard
       v-if="status === 'loading'"
-      class="flex flex-col items-center justify-center gap-4 py-20"
+      class="w-full max-w-md mx-auto"
+      :ui="{ body: 'flex flex-col items-center justify-center gap-4 py-20' }"
     >
       <UIcon
         name="i-lucide-loader-circle"
         class="size-8 animate-spin text-muted"
       />
-      <p class="text-sm text-muted">
+      <p class="text-sm text-muted text-center">
         {{ estimate && remainingSeconds > 1 ? $t('home.loading_estimate', { count: estimate.count, seconds: remainingSeconds }) : estimate ? $t('home.loading_finishing') : $t('home.loading') }}
       </p>
-    </div>
+    </UCard>
 
     <template v-if="data">
       <div class="flex flex-col gap-y-8">
