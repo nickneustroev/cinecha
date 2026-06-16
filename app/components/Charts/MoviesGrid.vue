@@ -12,6 +12,9 @@ const props = defineProps<{
   showYearFilter?: boolean
 }>()
 
+const route = useRoute()
+const router = useRouter()
+
 const visibleCount = ref(props.limit ?? 8)
 
 const years = computed(() => {
@@ -19,7 +22,7 @@ const years = computed(() => {
   return ['All', ...[...set].sort((a, b) => b - a)]
 })
 
-const selectedYear = ref<string>('All')
+const selectedYear = ref<string>((route.query.year as string) || 'All')
 
 const watchedYears = computed(() => {
   const set = new Set(
@@ -30,7 +33,7 @@ const watchedYears = computed(() => {
   return ['All', ...[...set].sort((a, b) => Number(b) - Number(a))]
 })
 
-const selectedWatchedYear = ref<string>('All')
+const selectedWatchedYear = ref<string>((route.query.watchedYear as string) || 'All')
 
 const earliestWatchedYear = computed(() => {
   const years = watchedYears.value.filter(y => y !== 'All')
@@ -42,7 +45,7 @@ const genres = computed(() => {
   return ['All', ...[...set].sort()]
 })
 
-const selectedGenre = ref<string>('All')
+const selectedGenre = ref<string>((route.query.genre as string) || 'All')
 
 const sortedList = computed(() => {
   const list = [...props.data]
@@ -92,6 +95,7 @@ function showMoreCards() {
 
 watch([selectedYear, selectedWatchedYear, selectedGenre], () => {
   visibleCount.value = props.limit ?? 8
+  router.replace({ query: { ...route.query, year: selectedYear.value === 'All' ? undefined : selectedYear.value, watchedYear: selectedWatchedYear.value === 'All' ? undefined : selectedWatchedYear.value, genre: selectedGenre.value === 'All' ? undefined : selectedGenre.value } })
 })
 </script>
 
