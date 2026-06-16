@@ -55,7 +55,13 @@ const sortedList = computed(() => {
     })
     return filtered
   }
-  list.sort((a, b) => b.userRating - a.userRating)
+  list.sort((a, b) => {
+    const ratingDiff = b.userRating - a.userRating
+    if (ratingDiff !== 0) return ratingDiff
+    if (!a.dateRated) return 1
+    if (!b.dateRated) return -1
+    return b.dateRated.localeCompare(a.dateRated)
+  })
   return list
 })
 
