@@ -17,7 +17,7 @@ onMounted(async () => {
         color="primary"
         @click="process"
       >
-        {{ data ? 'Запустить заново' : 'Запуск' }}
+        {{ data ? $t('home.run_again') : $t('home.run') }}
       </UButton>
     </div>
 
@@ -30,21 +30,21 @@ onMounted(async () => {
         class="size-8 animate-spin text-muted"
       />
       <p class="text-sm text-muted">
-        Идёт подготовка данных...
+        {{ $t('home.loading') }}
       </p>
     </div>
 
     <template v-if="data">
       <div class="flex flex-col gap-y-8">
         <h3 class="text-2xl font-semibold">
-          Top-8 Movies by Rating
+          {{ $t('home.top_movies') }}
         </h3>
         <ChartsMoviesGrid :data="data.enriched" :import-date="data.stats.importDate" link="/movies?tab=ratings" />
 
         <ChartsMoviesGrid
           :data="data.enriched"
           :import-date="data.stats.importDate"
-          title="Last Movies Watched (from favorite)"
+          :title="$t('home.last_movies_watched')"
           sort-by="dateRated"
           :limit="8"
           link="/movies?tab=last-watched"

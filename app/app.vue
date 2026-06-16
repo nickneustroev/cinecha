@@ -1,4 +1,7 @@
-<script setup>
+<script setup lang="ts">
+const { t, locale, locales } = useI18n()
+const availableLocales = computed(() => locales.value as { code: string; name: string }[])
+
 useHead({
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1' }
@@ -7,11 +10,11 @@ useHead({
     { rel: 'icon', href: '/favicon.ico' }
   ],
   htmlAttrs: {
-    lang: 'en'
+    lang: computed(() => locale.value)
   }
 })
 
-const title = 'Nuxt Starter Template'
+const title = computed(() => `${t('nav.home')} - Cinecha`)
 const description = 'A production-ready starter template powered by Nuxt UI. Build beautiful, accessible, and performant applications in minutes, not hours.'
 
 useSeoMeta({
@@ -22,6 +25,10 @@ useSeoMeta({
   ogImage: 'https://ui.nuxt.com/assets/templates/nuxt/starter-light.png',
   twitterCard: 'summary_large_image'
 })
+
+function switchLocale(code: string) {
+  locale.value = code as 'en' | 'ru'
+}
 </script>
 
 <template>
@@ -38,15 +45,26 @@ useSeoMeta({
 
           <UNavigationMenu
             :items="[
-              { label: 'Home', to: '/' },
-              { label: 'Movies', to: '/movies' },
-              { label: 'Directors', to: '/directors' }
+              { label: $t('nav.home'), to: '/' },
+              { label: $t('nav.movies'), to: '/movies' },
+              { label: $t('nav.directors'), to: '/directors' }
             ]"
           />
         </div>
       </template>
 
       <template #right>
+        <UButton
+          v-for="loc in availableLocales"
+          :key="loc.code"
+          size="sm"
+          :color="locale === loc.code ? 'primary' : 'neutral'"
+          variant="ghost"
+          @click="switchLocale(loc.code)"
+        >
+          {{ loc.name }}
+        </UButton>
+
         <UColorModeButton />
 
         <UButton

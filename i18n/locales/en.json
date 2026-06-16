@@ -1,0 +1,70 @@
+{
+  "nav": {
+    "home": "Home",
+    "movies": "Movies",
+    "directors": "Directors"
+  },
+  "home": {
+    "run": "Run",
+    "run_again": "Run again",
+    "loading": "Preparing data...",
+    "top_movies": "Top-8 Movies by Rating",
+    "last_movies_watched": "Last Movies Watched (from favorite)"
+  },
+  "pages": {
+    "movies": {
+      "loading": "Preparing data...",
+      "tabs": {
+        "ratings": "By Ratings",
+        "last_watched": "Last Watched (favorite)"
+      }
+    },
+    "directors": {
+      "loading": "Preparing data...",
+      "tabs": {
+        "points": "By Points",
+        "highest": "By Highest Ratings"
+      },
+      "title": {
+        "points": "Top Directors by Points",
+        "highest": "Top Directors by Highest Movie Rating"
+      }
+    }
+  },
+  "movie_card": {
+    "watched": "Watched:",
+    "watched_before": "Watched: before"
+  },
+  "movies_grid": {
+    "show_more": "Show {count} more",
+    "view_all": "View all",
+    "year_released": "Year Released",
+    "year_watched": "Year Watched",
+    "genre": "Genre",
+    "all": "All"
+  },
+  "directors_grid": {
+    "show_more": "Show {count} more",
+    "view_all": "View all",
+    "title": {
+      "points": "Top Directors by Points",
+      "highest": "Top Directors by Highest Movie Rating"
+    }
+  },
+  "charts": {
+    "watched_this_year": "Watched This Year",
+    "watched_all_by_rating": "Watched All By Rating",
+    "top_30_directors_points": "Top-30 directors by points (from favorite)",
+    "top_30_directors_avg_rating_min_2": "Top-30 directors by avg rating min 2 (from favorite)",
+    "top_30_directors_avg_rating": "Top-30 directors by avg rating w/out min (from favorite)",
+    "top_30_directors_count": "Top-30 directors by count (from favorite)",
+    "top_15_genres": "Top-15 genres (from favorite)",
+    "genre_share_by_year_released": "Genre Share By Year Released (from favorite)",
+    "genre_share_by_year_watched": "Genre Share By Year Watched (from favorite)",
+    "rating_stacked_by_year_released": "Rating Stacked By Year Released",
+    "rating_share_by_year_released": "Rating Share By Year Released",
+    "all_movies_count_by_month_watched": "All Movies Count By Month Watched",
+    "top_movies_by_rating": "Top Movies by Rating",
+    "last_watched": "Last Watched (favorite)"
+  }
+}

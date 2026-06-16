@@ -57,7 +57,7 @@ const chartOptions = {
 
 <template>
   <ChartsChartWrapper
-    title="Top-15 genres (from favorite)"
+    :title="$t('charts.top_15_genres')"
     :show-title="showTitle"
   >
     <BarChart

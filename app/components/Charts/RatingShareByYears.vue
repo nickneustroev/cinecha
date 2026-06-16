@@ -54,7 +54,7 @@ const yFormatter = (value: number): string => `${value}%`
 
 <template>
   <ChartsChartWrapper
-    title="Rating Share By Year Released"
+    :title="$t('charts.rating_share_by_year_released')"
     :show-title="showTitle"
   >
     <AreaChart

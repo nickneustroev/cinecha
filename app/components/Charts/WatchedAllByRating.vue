@@ -53,7 +53,7 @@ const chartOptions = {
 
 <template>
   <ChartsChartWrapper
-    title="Watched All By Rating"
+    :title="$t('charts.watched_all_by_rating')"
     :show-title="showTitle"
   >
     <BarChart

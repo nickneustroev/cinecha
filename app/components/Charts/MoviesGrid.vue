@@ -12,6 +12,7 @@ const props = defineProps<{
   showYearFilter?: boolean
 }>()
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 
@@ -30,7 +31,8 @@ const watchedYears = computed(() => {
       .map(m => m.dateRated?.slice(0, 4))
       .filter((y): y is string => !!y)
   )
-  return ['All', ...[...set].sort((a, b) => Number(b) - Number(a))]
+  const sorted = [...set].sort((a, b) => Number(b) - Number(a))
+  return ['All', ...sorted]
 })
 
 const selectedWatchedYear = ref<string>((route.query.watchedYear as string) || 'All')
@@ -113,7 +115,7 @@ watch([selectedYear, selectedWatchedYear, selectedGenre], () => {
     >
       <div>
         <p class="text-sm text-muted mb-1">
-          Year Released
+          {{ $t('movies_grid.year_released') }}
         </p>
         <USelectMenu
           v-model="selectedYear"
@@ -123,7 +125,7 @@ watch([selectedYear, selectedWatchedYear, selectedGenre], () => {
       </div>
       <div>
         <p class="text-sm text-muted mb-1">
-          Year Watched
+          {{ $t('movies_grid.year_watched') }}
         </p>
         <USelectMenu
           v-model="selectedWatchedYear"
@@ -133,7 +135,7 @@ watch([selectedYear, selectedWatchedYear, selectedGenre], () => {
       </div>
       <div>
         <p class="text-sm text-muted mb-1">
-          Genre
+          {{ $t('movies_grid.genre') }}
         </p>
         <USelectMenu
           v-model="selectedGenre"
@@ -159,7 +161,7 @@ watch([selectedYear, selectedWatchedYear, selectedGenre], () => {
         color="primary"
         @click="showMoreCards"
       >
-        Показать еще {{ showMore }}
+        {{ $t('movies_grid.show_more', { count: showMore }) }}
       </UButton>
     </div>
     <div
@@ -170,7 +172,7 @@ watch([selectedYear, selectedWatchedYear, selectedGenre], () => {
         :to="link"
         size="xl"
       >
-        Смотреть всех
+        {{ $t('movies_grid.view_all') }}
       </UButton>
     </div>
   </div>

@@ -76,7 +76,7 @@ const chartOptions = {
 
 <template>
   <ChartsChartWrapper
-    title="All Movies Count By Month Watched"
+    :title="$t('charts.all_movies_count_by_month_watched')"
     :show-title="showTitle"
   >
     <BarChart

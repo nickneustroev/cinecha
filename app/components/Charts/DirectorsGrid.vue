@@ -5,6 +5,8 @@ defineOptions({
   tags: ['cards', 'page']
 })
 
+const { t } = useI18n()
+
 const props = withDefaults(defineProps<{
   data: EnrichedMovie[]
   title?: string
@@ -110,7 +112,7 @@ function computeByHighest(): DirectorCard[] {
 <template>
   <div class="mx-auto">
     <h3 class="mb-6 text-2xl font-semibold">
-      {{ title ?? `Top${showMore ? '' : `-${limit}`} Directors by ${sortBy === 'points' ? 'Points' : 'Highest Movie Rating'}` }}
+      {{ title ?? (sortBy === 'points' ? t('directors_grid.title.points') : t('directors_grid.title.highest')) }}
     </h3>
     <UPageGrid :ui="{ base: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4' }">
       <DirectorCard
@@ -129,7 +131,7 @@ function computeByHighest(): DirectorCard[] {
         color="primary"
         @click="showMoreCards"
       >
-        Показать еще {{ showMore }}
+        {{ $t('directors_grid.show_more', { count: showMore }) }}
       </UButton>
     </div>
     <div
@@ -140,7 +142,7 @@ function computeByHighest(): DirectorCard[] {
         :to="props.link"
         size="xl"
       >
-        Смотреть всех
+        {{ $t('directors_grid.view_all') }}
       </UButton>
     </div>
   </div>

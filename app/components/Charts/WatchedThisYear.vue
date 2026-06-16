@@ -47,7 +47,7 @@ const yFormatter = (tick: number) => tick.toString()
 
 <template>
   <ChartsChartWrapper
-    title="Watched This Year"
+    :title="$t('charts.watched_this_year')"
     :show-title="showTitle"
   >
     <BarChart

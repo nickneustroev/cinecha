@@ -4,8 +4,19 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
-    'nuxt-charts'
+    'nuxt-charts',
+    '@nuxtjs/i18n'
   ],
+
+  i18n: {
+    defaultLocale: 'ru',
+    strategy: 'no_prefix',
+    locales: [
+      { code: 'en', name: 'English', file: 'en.json' },
+      { code: 'ru', name: 'Русский', file: 'ru.json' }
+    ],
+    detectBrowserLanguage: false
+  },
 
   devtools: {
     enabled: true

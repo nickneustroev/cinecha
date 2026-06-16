@@ -1,14 +1,15 @@
 <script setup lang="ts">
 const { data, status, load } = useImportData()
+const { t } = useI18n()
 
 onMounted(async () => {
   await load()
 })
 
-const tabItems = [
-  { label: 'By Points', value: 'points' },
-  { label: 'By Highest Ratings', value: 'highest' }
-]
+const tabItems = computed(() => [
+  { label: t('pages.directors.tabs.points'), value: 'points' },
+  { label: t('pages.directors.tabs.highest'), value: 'highest' }
+])
 
 const route = useRoute()
 const router = useRouter()
@@ -30,7 +31,7 @@ watch(activeTab, (tab) => {
         class="size-8 animate-spin text-muted"
       />
       <p class="text-sm text-muted">
-        Идёт подготовка данных...
+        {{ $t('pages.directors.loading') }}
       </p>
     </div>
 
@@ -47,7 +48,7 @@ watch(activeTab, (tab) => {
         <ChartsDirectorsGrid
           v-if="activeTab === 'points'"
           :data="data.enriched"
-          title="Top Directors by Points"
+          :title="$t('pages.directors.title.points')"
           :limit="100"
           :show-more="100"
           sort-by="points"
@@ -55,7 +56,7 @@ watch(activeTab, (tab) => {
         <ChartsDirectorsGrid
           v-if="activeTab === 'highest'"
           :data="data.enriched"
-          title="Top Directors by Highest Movie Rating"
+          :title="$t('pages.directors.title.highest')"
           :limit="100"
           :show-more="100"
           sort-by="highestMovieRating"

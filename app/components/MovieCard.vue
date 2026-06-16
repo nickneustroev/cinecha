@@ -7,13 +7,14 @@ const props = defineProps<{
   importDate?: string | null
 }>()
 
-const ruMonths = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
+const { t, locale } = useI18n()
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return ''
   const [y, m, d] = dateStr.split('-')
-  const monthIndex = Number.parseInt(m!, 10) - 1
-  return `${Number.parseInt(d!)} ${ruMonths[monthIndex] ?? ''} ${y}`
+  const date = new Date(Number(y!), Number(m!) - 1, Number(d!))
+  const month = date.toLocaleDateString(locale.value, { month: 'short' }).replace(/\.$/, '')
+  return `${Number(d!)} ${month} ${y!}`
 }
 </script>
 
@@ -58,7 +59,7 @@ function formatDate(dateStr: string | null): string {
       v-if="movie.dateRated"
       class="mt-3 text-sm text-muted"
     >
-      {{ movie.dateRated === props.importDate ? 'Посмотрено: до' : 'Посмотрено:' }} {{ formatDate(movie.dateRated) }}
+      {{ movie.dateRated === props.importDate ? t('movie_card.watched_before') : t('movie_card.watched') }} {{ formatDate(movie.dateRated) }}
     </p>
   </SimpleCard>
 </template>

@@ -1,14 +1,15 @@
 <script setup lang="ts">
 const { data, status, load } = useImportData()
+const { t } = useI18n()
 
 onMounted(async () => {
   await load()
 })
 
-const tabItems = [
-  { label: 'By Ratings', value: 'ratings' },
-  { label: 'Last Watched (favorite)', value: 'last-watched' }
-]
+const tabItems = computed(() => [
+  { label: t('pages.movies.tabs.ratings'), value: 'ratings' },
+  { label: t('pages.movies.tabs.last_watched'), value: 'last-watched' }
+])
 
 const route = useRoute()
 const router = useRouter()
@@ -30,7 +31,7 @@ watch(activeTab, (tab) => {
         class="size-8 animate-spin text-muted"
       />
       <p class="text-sm text-muted">
-        Идёт подготовка данных...
+        {{ $t('pages.movies.loading') }}
       </p>
     </div>
 
@@ -50,7 +51,7 @@ watch(activeTab, (tab) => {
           :import-date="data.stats.importDate"
           :limit="100"
           :show-more="100"
-          title="Top Movies by Rating"
+          :title="$t('charts.top_movies_by_rating')"
           show-year-filter
         />
         <ChartsMoviesGrid
@@ -60,7 +61,7 @@ watch(activeTab, (tab) => {
           :limit="100"
           :show-more="100"
           sort-by="dateRated"
-          title="Last Watched (favorite)"
+          :title="$t('charts.last_watched')"
         />
       </div>
     </template>
