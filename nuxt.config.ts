@@ -15,7 +15,10 @@ export default defineNuxtConfig({
       { code: 'en', name: 'English', file: 'en.json' },
       { code: 'ru', name: 'Русский', file: 'ru.json' }
     ],
-    detectBrowserLanguage: false
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_lang'
+    }
   },
 
   devtools: {
