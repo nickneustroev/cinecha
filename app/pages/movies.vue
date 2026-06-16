@@ -6,7 +6,8 @@ onMounted(async () => {
 })
 
 const tabItems = [
-  { label: 'By Ratings', value: 'ratings' }
+  { label: 'By Ratings', value: 'ratings' },
+  { label: 'Last Watched (favorite)', value: 'last-watched' }
 ]
 
 const route = useRoute()
@@ -50,6 +51,15 @@ watch(activeTab, (tab) => {
           :limit="100"
           :show-more="100"
           title="Top Movies by Rating"
+        />
+        <ChartsMoviesGrid
+          v-if="activeTab === 'last-watched'"
+          :data="data.enriched"
+          :import-date="data.stats.importDate"
+          :limit="100"
+          :show-more="100"
+          sort-by="dateRated"
+          title="Last Watched (favorite)"
         />
       </div>
     </template>

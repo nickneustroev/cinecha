@@ -47,6 +47,7 @@ onMounted(async () => {
           title="Last Movies Watched (from favorite)"
           sort-by="dateRated"
           :limit="8"
+          link="/movies?tab=last-watched"
         />
 
         <ChartsTopDirectorsByPointsCards
