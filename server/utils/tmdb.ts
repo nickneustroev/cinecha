@@ -88,6 +88,7 @@ async function getMovieDetails(tmdbId: number, token: string, locale: string) {
   if (!data) return null
   const directors = data.credits?.crew?.filter((c: any) => c.job === 'Director') || []
   return {
+    title: data.title || null,
     genres: data.genres?.map((g: any) => g.name) || [],
     poster: data.poster_path || null,
     directors: directors.map((d: any) => ({ name: d.name, photo: d.profile_path || null })),
@@ -207,11 +208,11 @@ export async function processCSVData(
 
         const isExact = searchResult.release_date
           ? parseInt(searchResult.release_date.split('-')[0], 10) === movie.year
-            && searchResult.title.toLowerCase() === movie.title.toLowerCase()
+            && (detail.title ?? searchResult.title).toLowerCase() === movie.title.toLowerCase()
           : false
 
         cache[key] = {
-          uri: movie.uri, title: movie.title, year: movie.year,
+          uri: movie.uri, title: detail.title ?? movie.title, year: movie.year,
           tmdbId: searchResult.id,
           genres: detail.genres,
           poster: detail.poster,
