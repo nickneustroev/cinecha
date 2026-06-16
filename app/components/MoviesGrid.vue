@@ -154,7 +154,7 @@ watch([selectedYear, selectedWatchedYear, selectedGenre], () => {
     </div>
     <div
       v-if="showMore && hasMore"
-      class="flex justify-center mt-4"
+      class="flex justify-center mt-6"
     >
       <UButton
         size="lg"

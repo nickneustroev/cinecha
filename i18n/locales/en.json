@@ -47,6 +47,7 @@
     "show_more": "Show {count} more",
     "view_all": "View all",
     "points_label": "Points",
+    "highest_label": "Highest rating",
     "title": {
       "points": "Top Directors by Points",
       "highest": "Top Directors by Highest Movie Rating"

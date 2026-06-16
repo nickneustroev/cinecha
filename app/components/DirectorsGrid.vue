@@ -98,7 +98,7 @@ function computeByHighest(): DirectorCard[] {
       return {
         director,
         photo: entry.photo,
-        description: `Highest: ${entry.maxRating}`,
+        description: `${t('directors_grid.highest_label')}: ${entry.maxRating}`,
         movies: topMovies,
         _sortValue: 0
       }
@@ -126,7 +126,7 @@ function computeByHighest(): DirectorCard[] {
 
     <div
       v-if="showMore && hasMore"
-      class="flex justify-center mt-4"
+      class="flex justify-center mt-6"
     >
       <UButton
         size="lg"
