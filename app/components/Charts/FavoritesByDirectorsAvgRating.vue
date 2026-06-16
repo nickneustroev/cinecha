@@ -46,7 +46,7 @@ const chartCategories = computed(() => ({
 }))
 
 const xFormatter = (tick: number) => tick.toFixed(2)
-const yFormatter = (_tick: string, i?: number) => {
+const yFormatter = (_tick: number | Date, i?: number) => {
   const idx = i ?? 0
   return chartData.value[idx]?.director ?? String(_tick)
 }
@@ -59,7 +59,7 @@ const yFormatter = (_tick: string, i?: number) => {
   >
     <BarChart
       :data="chartData"
-      orientation="horizontal"
+      :orientation="Orientation.Horizontal"
       :height="500"
       :categories="chartCategories"
       :y-axis="['avgRating']"
