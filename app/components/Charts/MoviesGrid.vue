@@ -13,21 +13,24 @@ const props = defineProps<{
 
 const visibleCount = ref(props.limit ?? 8)
 
-const cards = computed(() => {
-  const sorted = [...props.data]
+const sortedList = computed(() => {
+  const list = [...props.data]
   if (props.sortBy === 'dateRated') {
-    sorted.sort((a, b) => {
+    const filtered = list.filter(m => m.dateRated && m.dateRated !== props.importDate)
+    filtered.sort((a, b) => {
       if (!a.dateRated) return 1
       if (!b.dateRated) return -1
       return b.dateRated.localeCompare(a.dateRated)
     })
-  } else {
-    sorted.sort((a, b) => b.userRating - a.userRating)
+    return filtered
   }
-  return sorted.slice(0, visibleCount.value)
+  list.sort((a, b) => b.userRating - a.userRating)
+  return list
 })
 
-const hasMore = computed(() => visibleCount.value < props.data.length)
+const cards = computed(() => sortedList.value.slice(0, visibleCount.value))
+
+const hasMore = computed(() => visibleCount.value < sortedList.value.length)
 
 function showMoreCards() {
   visibleCount.value += props.showMore!
