@@ -6,13 +6,12 @@ onMounted(async () => {
 })
 
 const tabItems = [
-  { label: 'By Points', value: 'points' },
-  { label: 'By Highest Ratings', value: 'highest' }
+  { label: 'By Ratings', value: 'ratings' }
 ]
 
 const route = useRoute()
 const router = useRouter()
-const activeTab = ref((route.query.tab as string) || 'points')
+const activeTab = ref((route.query.tab as string) || 'ratings')
 
 watch(activeTab, (tab) => {
   router.replace({ query: { ...route.query, tab } })
@@ -44,17 +43,13 @@ watch(activeTab, (tab) => {
       />
 
       <div class="flex flex-col gap-y-8 pt-8">
-        <ChartsTopDirectorsByPointsCards
-          v-if="activeTab === 'points'"
+        <ChartsTopMoviesByRating
+          v-if="activeTab === 'ratings'"
           :data="data.enriched"
-          title="Top-100 Directors by Points"
+          :import-date="data.stats.importDate"
           :limit="100"
-        />
-        <ChartsTopDirectorsByHighestRatingCards
-          v-if="activeTab === 'highest'"
-          :data="data.enriched"
-          title="Top-100 Directors by Highest Movie Rating"
-          :limit="100"
+          :show-more="100"
+          title="Top Movies by Rating"
         />
       </div>
     </template>

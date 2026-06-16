@@ -39,6 +39,7 @@ useSeoMeta({
           <UNavigationMenu
             :items="[
               { label: 'Home', to: '/' },
+              { label: 'Movies', to: '/movies' },
               { label: 'Directors', to: '/directors' }
             ]"
           />

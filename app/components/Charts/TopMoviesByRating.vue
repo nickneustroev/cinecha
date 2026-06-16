@@ -5,7 +5,25 @@ import { getRatingColor } from '~/utils/ratings'
 const props = defineProps<{
   data: EnrichedMovie[]
   importDate?: string | null
+  limit?: number
+  title?: string
+  showMore?: number
 }>()
+
+const visibleCount = ref(props.limit ?? 8)
+
+const cards = computed(() =>
+  props.data
+    .slice()
+    .sort((a, b) => b.userRating - a.userRating)
+    .slice(0, visibleCount.value)
+)
+
+const hasMore = computed(() => visibleCount.value < props.data.length)
+
+function showMoreCards() {
+  visibleCount.value += props.showMore!
+}
 
 const ruMonths = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
 
@@ -16,16 +34,17 @@ function formatDate(dateStr: string | null): string {
   return `${Number.parseInt(d!)} ${ruMonths[monthIndex] ?? ''} ${y}`
 }
 
-const cards = computed(() =>
-  props.data
-    .slice()
-    .sort((a, b) => b.userRating - a.userRating)
-    .slice(0, 8)
-)
 </script>
 
 <template>
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  <div>
+    <h3
+      v-if="title"
+      class="text-2xl font-semibold mb-4"
+    >
+      {{ title }}
+    </h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     <SimpleCard
       v-for="(movie, index) in cards"
       :key="index"
@@ -71,5 +90,18 @@ const cards = computed(() =>
         {{ movie.dateRated === props.importDate ? 'Посмотрено: до' : 'Посмотрено:' }} {{ formatDate(movie.dateRated) }}
       </p>
     </SimpleCard>
+    </div>
+    <div
+      v-if="showMore && hasMore"
+      class="flex justify-center mt-4"
+    >
+      <UButton
+        size="lg"
+        color="primary"
+        @click="showMoreCards"
+      >
+        Показать еще {{ showMore }}
+      </UButton>
+    </div>
   </div>
 </template>
