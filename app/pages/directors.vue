@@ -45,7 +45,7 @@ watch(activeTab, (tab) => {
       />
 
       <div class="flex flex-col gap-y-8 pt-8">
-        <ChartsDirectorsGrid
+        <DirectorsGrid
           v-if="activeTab === 'points'"
           :data="data.enriched"
           :title="$t('pages.directors.title.points')"
@@ -53,7 +53,7 @@ watch(activeTab, (tab) => {
           :show-more="100"
           sort-by="points"
         />
-        <ChartsDirectorsGrid
+        <DirectorsGrid
           v-if="activeTab === 'highest'"
           :data="data.enriched"
           :title="$t('pages.directors.title.highest')"

@@ -39,9 +39,9 @@ onMounted(async () => {
         <h3 class="text-2xl font-semibold">
           {{ $t('home.top_movies') }}
         </h3>
-        <ChartsMoviesGrid :data="data.enriched" :import-date="data.stats.importDate" link="/movies?tab=ratings" />
+        <MoviesGrid :data="data.enriched" :import-date="data.stats.importDate" link="/movies?tab=ratings" />
 
-        <ChartsMoviesGrid
+        <MoviesGrid
           :data="data.enriched"
           :import-date="data.stats.importDate"
           :title="$t('home.last_movies_watched')"
@@ -50,13 +50,13 @@ onMounted(async () => {
           link="/movies?tab=last-watched"
         />
 
-        <ChartsDirectorsGrid
+        <DirectorsGrid
           :data="data.enriched"
           :limit="8"
           sort-by="points"
           link="/directors?tab=points"
         />
-        <ChartsDirectorsGrid
+        <DirectorsGrid
           :data="data.enriched"
           :limit="8"
           sort-by="highestMovieRating"

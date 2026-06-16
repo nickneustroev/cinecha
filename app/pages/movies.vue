@@ -45,7 +45,7 @@ watch(activeTab, (tab) => {
       />
 
       <div class="flex flex-col gap-y-8 pt-8">
-        <ChartsMoviesGrid
+        <MoviesGrid
           v-if="activeTab === 'ratings'"
           :data="data.enriched"
           :import-date="data.stats.importDate"
@@ -54,7 +54,7 @@ watch(activeTab, (tab) => {
           :title="$t('charts.top_movies_by_rating')"
           show-year-filter
         />
-        <ChartsMoviesGrid
+        <MoviesGrid
           v-if="activeTab === 'last-watched'"
           :data="data.enriched"
           :import-date="data.stats.importDate"
