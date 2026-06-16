@@ -111,7 +111,7 @@ async function onFileSelect(file: File | null | undefined) {
     >
       <p
         v-if="(showUpload || status === 'idle') && status !== 'loading'"
-        class="text-sm text-muted text-center max-w-md whitespace-pre-line"
+        class="text-sm text-muted text-center max-w-xl whitespace-pre-line"
       >
         {{ $t('home.min_rating_description') }}
       </p>

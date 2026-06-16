@@ -6,7 +6,8 @@
 
 ## Commit Policy
 
-- NEVER commit unless the user explicitly says "коммит" or "commit". Ask first.
+- NEVER commit unprompted or ask if you should commit.
+- Only commit when the user explicitly says "коммит" or "commit".
 
 ## Edit Rules
 
