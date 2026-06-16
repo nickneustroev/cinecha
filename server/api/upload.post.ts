@@ -14,6 +14,9 @@ export default defineEventHandler(async (event): Promise<ImportData> => {
     throw createError({ statusCode: 400, statusMessage: 'No file uploaded' })
   }
 
+  const minRatingField = formData.find(f => f.name === 'minRating')
+  const minRating = minRatingField ? parseInt(minRatingField.data.toString('utf-8'), 10) || 3 : 3
+
   const fileField = formData.find(f => f.name === 'file')
   if (!fileField || !fileField.filename) {
     throw createError({ statusCode: 400, statusMessage: 'Missing file field' })
@@ -56,6 +59,7 @@ export default defineEventHandler(async (event): Promise<ImportData> => {
       watched: csvFiles['watched.csv']!,
     },
     CACHE_PATH,
-    locale
+    locale,
+    minRating
   )
 })

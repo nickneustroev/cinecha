@@ -21,12 +21,15 @@ export function useImportData() {
     return false
   }
 
-  async function process() {
+  async function process(minRating = 3) {
     status.value = 'loading'
     error.value = null
 
     try {
-      const result = await $fetch<ImportData>('/api/process', { method: 'POST' })
+      const result = await $fetch<ImportData>('/api/process', {
+        method: 'POST',
+        body: { minRating },
+      })
       data.value = result
       status.value = 'done'
 
@@ -40,13 +43,14 @@ export function useImportData() {
     }
   }
 
-  async function processFromFile(file: File) {
+  async function processFromFile(file: File, minRating = 3) {
     status.value = 'loading'
     error.value = null
 
     try {
       const formData = new FormData()
       formData.append('file', file)
+      formData.append('minRating', String(minRating))
       const result = await $fetch<ImportData>('/api/upload', {
         method: 'POST',
         body: formData,

@@ -4,7 +4,6 @@ import { join } from 'node:path'
 import type { ImportData } from '~/types/import'
 
 const TMDB_BASE = 'https://api.themoviedb.org/3'
-const GOOD_RATING_THRESHOLD = 3
 const RATE_LIMIT = 30
 const BATCH_SIZE = 10
 
@@ -102,7 +101,8 @@ function cacheKey(uri: string, locale: string): string {
 export async function processCSVData(
   csvFiles: { diary: string; ratings: string; watched: string },
   cachePath: string,
-  locale = 'en-US'
+  locale = 'en-US',
+  minRating = 3
 ): Promise<ImportData> {
   const tmdbToken = resolveToken()
   console.log('[process] подготовка данных началась')
@@ -148,7 +148,7 @@ export async function processCSVData(
   const sum = ratings.reduce((acc, entry) => acc + entry.rating, 0)
   if (ratings.length > 0) avgRating = Math.round((sum / ratings.length) * 100) / 100
 
-  console.log(`[process] требуется обогащение данных: для ratings с оценкой ≥ ${GOOD_RATING_THRESHOLD}`)
+  console.log(`[process] требуется обогащение данных: для ratings с оценкой ≥ ${minRating}`)
 
   if (tmdbToken) {
     console.log('[process] доступы к TMDB обнаружены')
@@ -158,7 +158,7 @@ export async function processCSVData(
 
   const cache = loadOrCreateCache(cachePath)
 
-  const toEnrich = ratings.filter(m => m.rating !== null && m.rating >= GOOD_RATING_THRESHOLD)
+  const toEnrich = ratings.filter(m => m.rating !== null && m.rating >= minRating)
 
   let cachedCount = 0
   let fetchCount = 0

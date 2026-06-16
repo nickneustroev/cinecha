@@ -9,6 +9,7 @@ const showUpload = ref(false)
 const estimate = ref<{ count: number, seconds: number } | null>(null)
 const remainingSeconds = ref(0)
 const initialLoading = ref(true)
+const minRating = ref(3)
 let countdownTimer: ReturnType<typeof setInterval> | null = null
 
 onMounted(async () => {
@@ -61,7 +62,7 @@ function resetUpload() {
 
 async function runDemo() {
   showUpload.value = false
-  await process()
+  await process(minRating.value)
   showSuccess()
 }
 
@@ -79,10 +80,10 @@ async function onFileSelect(file: File | null | undefined) {
   }
 
   uploadedFile.value = file
-  const est = await estimateProcessingTime(file)
+  const est = await estimateProcessingTime(file, minRating.value)
   estimate.value = est
   if (est) startCountdown(est.seconds)
-  await processFromFile(file)
+  await processFromFile(file, minRating.value)
   showSuccess()
   showUpload.value = false
 }
@@ -108,6 +109,24 @@ async function onFileSelect(file: File | null | undefined) {
       class="flex flex-col items-center gap-6 py-8"
       :class="!data && status === 'idle' ? 'flex-1 justify-center' : ''"
     >
+      <p
+        v-if="(showUpload || status === 'idle') && status !== 'loading'"
+        class="text-sm text-muted text-center max-w-md"
+      >
+        {{ $t('home.min_rating_description') }}
+      </p>
+
+      <UInputNumber
+        v-if="(showUpload || status === 'idle') && status !== 'loading'"
+        v-model="minRating"
+        :min="1"
+        :max="10"
+        :step="1"
+        color="neutral"
+        variant="outline"
+        class="w-32"
+      />
+
       <UFileUpload
         v-if="(showUpload || status === 'idle') && status !== 'loading'"
         accept=".zip"

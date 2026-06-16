@@ -8,6 +8,8 @@ const DEMO_ZIP = join(process.cwd(), 'data', 'demo.zip')
 
 export default defineEventHandler(async (event): Promise<ImportData> => {
   const locale = getCookie(event, 'i18n_lang') || 'en-US'
+  const body = await readBody<{ minRating?: number }>(event)
+  const minRating = body?.minRating || 3
   const zipData = readFileSync(DEMO_ZIP)
   const zip = new AdmZip(Buffer.from(zipData))
   const entries = zip.getEntries()
@@ -24,6 +26,7 @@ export default defineEventHandler(async (event): Promise<ImportData> => {
       watched: readZipCSV('watched.csv'),
     },
     CACHE_PATH,
-    locale
+    locale,
+    minRating
   )
 })

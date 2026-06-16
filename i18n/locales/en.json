@@ -17,6 +17,7 @@
     "upload_error_size": "File must be under 2MB",
     "upload_error_format": "Only .zip files are accepted",
     "upload_again": "Upload data again",
+    "min_rating_description": "Set the minimum rating for your favorite movies. Default is 3, but you can change it. Only movies with this rating or higher will be processed.",
     "upload_or_demo": "Or, if you don't have your own data, you can:",
     "import_success": "Data import completed successfully."
   },
