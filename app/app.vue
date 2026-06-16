@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { t, locale, locales } = useI18n()
+const { t, locale, locales, setLocale } = useI18n()
 const availableLocales = computed(() => locales.value as { code: string; name: string }[])
 
 useHead({
@@ -26,8 +26,8 @@ useSeoMeta({
   twitterCard: 'summary_large_image'
 })
 
-function switchLocale(code: string) {
-  locale.value = code as 'en' | 'ru'
+function switchLocale(code: 'en' | 'ru') {
+  setLocale(code)
 }
 </script>
 
@@ -60,7 +60,7 @@ function switchLocale(code: string) {
           size="sm"
           :color="locale === loc.code ? 'primary' : 'neutral'"
           variant="ghost"
-          @click="switchLocale(loc.code)"
+          @click="switchLocale(loc.code as 'en' | 'ru')"
         >
           {{ loc.name }}
         </UButton>
