@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { data, status, load, process, processFromFile } = useImportData()
+const { data, status, load, process, processFromFile, clear } = useImportData()
 
 const uploadError = ref<string | null>(null)
 const uploadedFile = ref<File | null>(null)
@@ -7,6 +7,12 @@ const uploadedFile = ref<File | null>(null)
 onMounted(async () => {
   await load()
 })
+
+function resetUpload() {
+  uploadError.value = null
+  uploadedFile.value = null
+  clear()
+}
 
 async function onFileSelect(file: File | null | undefined) {
   uploadError.value = null
@@ -30,6 +36,7 @@ async function onFileSelect(file: File | null | undefined) {
   <UContainer class="bg-muted border-x border-accented pb-12">
     <div class="flex flex-col items-center gap-6 py-8">
       <UFileUpload
+        v-if="status === 'idle'"
         accept=".zip"
         :model-value="uploadedFile"
         :label="$t('home.upload_label')"
@@ -51,8 +58,16 @@ async function onFileSelect(file: File | null | undefined) {
         class="flex gap-4"
       >
         <UButton
+          v-if="data"
           size="xl"
           color="primary"
+          @click="resetUpload"
+        >
+          {{ $t('home.upload_again') }}
+        </UButton>
+        <UButton
+          size="xl"
+          color="secondary"
           @click="process"
         >
           {{ data ? $t('home.run_again') : $t('home.run') }}
@@ -78,7 +93,11 @@ async function onFileSelect(file: File | null | undefined) {
         <h3 class="text-2xl font-semibold">
           {{ $t('home.top_movies') }}
         </h3>
-        <MoviesGrid :data="data.enriched" :import-date="data.stats.importDate" link="/movies?tab=ratings" />
+        <MoviesGrid
+          :data="data.enriched"
+          :import-date="data.stats.importDate"
+          link="/movies?tab=ratings"
+        />
 
         <MoviesGrid
           :data="data.enriched"

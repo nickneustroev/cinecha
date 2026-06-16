@@ -5,15 +5,16 @@
     "directors": "Directors"
   },
   "home": {
-    "run": "Run",
-    "run_again": "Run again",
+    "run": "Run on demo data",
+    "run_again": "Restart on demo data",
     "loading": "Preparing data...",
     "top_movies": "Top Movies by Rating",
     "last_movies_watched": "Last Movies Watched (from favorite)",
     "upload_label": "Upload your Letterboxd export",
     "upload_description": ".zip file up to 2MB",
     "upload_error_size": "File must be under 2MB",
-    "upload_error_format": "Only .zip files are accepted"
+    "upload_error_format": "Only .zip files are accepted",
+    "upload_again": "Upload data again"
   },
   "pages": {
     "movies": {

@@ -1,20 +1,27 @@
 import { join } from 'node:path'
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import type { ImportData } from '~/types/import'
+import AdmZip from 'adm-zip'
 
-const CSV_DIR = join(process.cwd(), 'data', 'letterboxd-nikvkino-2026-06-12-10-11-utc')
 const CACHE_PATH = join(process.cwd(), 'data', 'tmdb-cache.json')
-
-function readCSV(filename: string): string {
-  const filePath = join(CSV_DIR, filename)
-  if (!existsSync(filePath)) return ''
-  return readFileSync(filePath, 'utf-8')
-}
+const DEMO_ZIP = join(process.cwd(), 'data', 'demo.zip')
 
 export default defineEventHandler(async (): Promise<ImportData> => {
-  const diary = readCSV('diary.csv')
-  const ratings = readCSV('ratings.csv')
-  const watched = readCSV('watched.csv')
+  const zipData = readFileSync(DEMO_ZIP)
+  const zip = new AdmZip(Buffer.from(zipData))
+  const entries = zip.getEntries()
 
-  return processCSVData({ diary, ratings, watched }, CACHE_PATH)
+  function readZipCSV(filename: string): string {
+    const entry = entries.find(e => e.entryName === filename)
+    return entry ? entry.getData().toString('utf-8') : ''
+  }
+
+  return processCSVData(
+    {
+      diary: readZipCSV('diary.csv'),
+      ratings: readZipCSV('ratings.csv'),
+      watched: readZipCSV('watched.csv'),
+    },
+    CACHE_PATH
+  )
 })
