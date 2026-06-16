@@ -10,17 +10,17 @@ defineProps<{
 </script>
 
 <template>
-  <UCard :ui="{ header: 'flex items-center gap-3' }">
+  <UCard :ui="{ header: 'flex items-center gap-3 p-1 sm:px-1' }">
     <template #header>
       <img
         v-if="photo"
         :src="`${TMDB_IMG_BASE}${photo}`"
         :alt="name"
-        class="h-14 w-10 rounded object-cover shrink-0"
-      />
+        class="h-20 w-auto rounded object-cover shrink-0"
+      >
       <div
         v-else
-        class="h-14 w-10 rounded bg-accented flex items-center justify-center text-[10px] text-muted leading-tight text-center shrink-0"
+        class="h-20 w-13 rounded bg-accented flex items-center justify-center text-[10px] text-muted leading-tight text-center shrink-0"
       >
         No<br>photo
       </div>
