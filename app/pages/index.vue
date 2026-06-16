@@ -111,7 +111,7 @@ async function onFileSelect(file: File | null | undefined) {
     >
       <p
         v-if="(showUpload || status === 'idle') && status !== 'loading'"
-        class="text-sm text-muted text-center max-w-md"
+        class="text-sm text-muted text-center max-w-md whitespace-pre-line"
       >
         {{ $t('home.min_rating_description') }}
       </p>
@@ -119,7 +119,7 @@ async function onFileSelect(file: File | null | undefined) {
       <UInputNumber
         v-if="(showUpload || status === 'idle') && status !== 'loading'"
         v-model="minRating"
-        :min="1"
+        :min="0.5"
         :max="5"
         :step="0.5"
         color="neutral"
