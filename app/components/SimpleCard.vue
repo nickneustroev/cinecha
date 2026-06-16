@@ -26,7 +26,9 @@ defineProps<{
       </div>
       <div class="min-w-0">
         <div class="text-xl text-default font-semibold">
-          {{ name }}
+          <slot name="title">
+            {{ name }}
+          </slot>
         </div>
         <div
           class="mt-1 text-muted text-base"

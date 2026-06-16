@@ -32,6 +32,9 @@ const cards = computed(() =>
       :photo="movie.poster"
       :name="movie.title"
     >
+      <template #title>
+        {{ movie.title }} <span class="text-muted">({{ movie.year }})</span>
+      </template>
       <div class="flex flex-wrap gap-x-3 gap-y-2">
         <p
           class="inline-flex items-center justify-center w-8 h-8 rounded-full text-base font-semibold"
