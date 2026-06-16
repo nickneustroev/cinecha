@@ -1,8 +1,9 @@
 <script setup lang="ts">
-const { data, status, load, process, processFromFile, clear } = useImportData()
+const { data, status, load, process, processFromFile } = useImportData()
 
 const uploadError = ref<string | null>(null)
 const uploadedFile = ref<File | null>(null)
+const showUpload = ref(false)
 
 onMounted(async () => {
   await load()
@@ -11,7 +12,7 @@ onMounted(async () => {
 function resetUpload() {
   uploadError.value = null
   uploadedFile.value = null
-  clear()
+  showUpload.value = true
 }
 
 async function onFileSelect(file: File | null | undefined) {
@@ -29,6 +30,7 @@ async function onFileSelect(file: File | null | undefined) {
 
   uploadedFile.value = file
   await processFromFile(file)
+  showUpload.value = false
 }
 </script>
 
@@ -36,7 +38,7 @@ async function onFileSelect(file: File | null | undefined) {
   <UContainer class="bg-muted border-x border-accented pb-12">
     <div class="flex flex-col items-center gap-6 py-8">
       <UFileUpload
-        v-if="status === 'idle'"
+        v-if="showUpload || status === 'idle'"
         accept=".zip"
         :model-value="uploadedFile"
         :label="$t('home.upload_label')"
@@ -51,6 +53,13 @@ async function onFileSelect(file: File | null | undefined) {
         class="text-sm text-error"
       >
         {{ $t(uploadError) }}
+      </p>
+
+      <p
+        v-if="showUpload || status === 'idle'"
+        class="text-sm text-muted text-center"
+      >
+        {{ $t('home.upload_or_demo') }}
       </p>
 
       <div
@@ -68,7 +77,7 @@ async function onFileSelect(file: File | null | undefined) {
         <UButton
           size="xl"
           color="secondary"
-          @click="process"
+          @click="process(); showUpload = false"
         >
           {{ data ? $t('home.run_again') : $t('home.run') }}
         </UButton>
