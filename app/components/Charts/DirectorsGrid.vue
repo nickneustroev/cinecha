@@ -65,7 +65,7 @@ function computeByPoints(): DirectorCard[] {
     .map(([director, entry]) => ({
       director,
       photo: entry.photo,
-      description: `Points: ${Math.round(entry.points)}`,
+      description: `Points: ${Math.round(entry.points / 10)}`,
       descriptionTitle: entry.breakdownParts.join(' + '),
       movies: entry.movies.sort((a, b) => b.userRating - a.userRating || b.year - a.year)
     }))
