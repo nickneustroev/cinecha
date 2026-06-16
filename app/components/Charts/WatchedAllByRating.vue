@@ -39,12 +39,6 @@ const xFormatter = (i: number): string => chartData.value[i]?.rating ?? ''
 const yFormatter = (tick: number) => tick.toString()
 
 const chartOptions = {
-  valueLabel: {
-    label: (d: { y: number }) => d.y.toString(),
-    labelSpacing: 30,
-    labelFontSize: 14,
-    color: 'var(--ui-text)'
-  },
   xAxis: 'rating' as keyof { rating: string, count: number },
   groupPadding: 0,
   barPadding: 0.2
