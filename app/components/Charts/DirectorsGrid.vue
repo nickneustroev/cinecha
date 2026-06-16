@@ -5,8 +5,6 @@ defineOptions({
   tags: ['cards', 'page']
 })
 
-const BOOST = 1
-
 const props = withDefaults(defineProps<{
   data: EnrichedMovie[]
   title?: string
@@ -53,7 +51,7 @@ function computeByPoints(): DirectorCard[] {
     for (const d of movie.directors) {
       const entry = map.get(d.name) ?? { photo: d.photo, points: 0, breakdownParts: [] as string[], movies: [] }
       if (!entry.photo) entry.photo = d.photo
-      const contribution = (movie.userRating * BOOST) ** 4
+      const contribution = movie.userRating ** 4
       entry.points += contribution
       entry.breakdownParts.push(`${movie.title} (${movie.userRating}⁴ = ${Math.round(contribution)})`)
       entry.movies.push({ title: movie.title, year: movie.year, userRating: movie.userRating })
