@@ -35,7 +35,7 @@ export default defineNuxtConfig({
 
   vite: {
     optimizeDeps: {
-      include: ['idb-keyval']
+      include: ['idb-keyval', 'jszip']
     }
   },
 

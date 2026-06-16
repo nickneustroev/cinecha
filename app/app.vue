@@ -31,7 +31,7 @@ function switchLocale(code: string) {
 </script>
 
 <template>
-  <UApp>
+  <UApp :toaster="{ position: 'top-right' }">
     <UHeader>
       <template #left>
         <div class="flex items-center gap-6">

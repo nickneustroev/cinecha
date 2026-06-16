@@ -1,18 +1,66 @@
 <script setup lang="ts">
 const { data, status, load, process, processFromFile } = useImportData()
+const toast = useToast()
+const { t } = useI18n()
 
 const uploadError = ref<string | null>(null)
 const uploadedFile = ref<File | null>(null)
 const showUpload = ref(false)
+const estimate = ref<{ count: number, seconds: number } | null>(null)
+const remainingSeconds = ref(0)
+let countdownTimer: ReturnType<typeof setInterval> | null = null
 
 onMounted(async () => {
   await load()
 })
 
+onUnmounted(() => {
+  if (countdownTimer) clearInterval(countdownTimer)
+})
+
+function showSuccess() {
+  toast.add({
+    title: t('home.import_success'),
+    color: 'success',
+    icon: 'i-lucide-check-circle',
+  })
+}
+
+watch(status, (val) => {
+  if (val !== 'loading' && countdownTimer) {
+    clearInterval(countdownTimer)
+    countdownTimer = null
+  }
+})
+
+function startCountdown(seconds: number) {
+  remainingSeconds.value = seconds
+  if (countdownTimer) clearInterval(countdownTimer)
+  countdownTimer = setInterval(() => {
+    if (remainingSeconds.value > 1) remainingSeconds.value--
+    else if (countdownTimer) {
+      clearInterval(countdownTimer)
+      countdownTimer = null
+    }
+  }, 1000)
+}
+
 function resetUpload() {
   uploadError.value = null
   uploadedFile.value = null
   showUpload.value = true
+  estimate.value = null
+  remainingSeconds.value = 0
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+    countdownTimer = null
+  }
+}
+
+async function runDemo() {
+  showUpload.value = false
+  await process()
+  showSuccess()
 }
 
 async function onFileSelect(file: File | null | undefined) {
@@ -29,7 +77,11 @@ async function onFileSelect(file: File | null | undefined) {
   }
 
   uploadedFile.value = file
+  const est = await estimateProcessingTime(file)
+  estimate.value = est
+  if (est) startCountdown(est.seconds)
   await processFromFile(file)
+  showSuccess()
   showUpload.value = false
 }
 </script>
@@ -44,7 +96,7 @@ async function onFileSelect(file: File | null | undefined) {
       :class="!data && status === 'idle' ? 'flex-1 justify-center' : ''"
     >
       <UFileUpload
-        v-if="showUpload || status === 'idle'"
+        v-if="(showUpload || status === 'idle') && status !== 'loading'"
         accept=".zip"
         :model-value="uploadedFile"
         :label="$t('home.upload_label')"
@@ -62,7 +114,7 @@ async function onFileSelect(file: File | null | undefined) {
       </p>
 
       <p
-        v-if="showUpload || status === 'idle'"
+        v-if="(showUpload || status === 'idle') && status !== 'loading'"
         class="text-sm text-muted text-center"
       >
         {{ $t('home.upload_or_demo') }}
@@ -73,7 +125,7 @@ async function onFileSelect(file: File | null | undefined) {
         class="flex gap-4"
       >
         <UButton
-          v-if="data"
+          v-if="data && !showUpload"
           size="xl"
           color="primary"
           @click="resetUpload"
@@ -83,7 +135,7 @@ async function onFileSelect(file: File | null | undefined) {
         <UButton
           size="xl"
           color="secondary"
-          @click="process(); showUpload = false"
+          @click="runDemo"
         >
           {{ data ? $t('home.run_again') : $t('home.run') }}
         </UButton>
@@ -99,7 +151,7 @@ async function onFileSelect(file: File | null | undefined) {
         class="size-8 animate-spin text-muted"
       />
       <p class="text-sm text-muted">
-        {{ $t('home.loading') }}
+        {{ estimate && remainingSeconds > 1 ? $t('home.loading_estimate', { count: estimate.count, seconds: remainingSeconds }) : estimate ? $t('home.loading_finishing') : $t('home.loading') }}
       </p>
     </div>
 

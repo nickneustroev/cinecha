@@ -8,6 +8,8 @@
     "run": "Run on demo data",
     "run_again": "Restart on demo data",
     "loading": "Preparing data...",
+    "loading_estimate": "Processing ~{count} movies... About {seconds} sec",
+    "loading_finishing": "Processing will finish soon, please wait",
     "top_movies": "Top Movies by Rating",
     "last_movies_watched": "Last Movies Watched (from favorite)",
     "upload_label": "Upload your Letterboxd export",
@@ -15,7 +17,8 @@
     "upload_error_size": "File must be under 2MB",
     "upload_error_format": "Only .zip files are accepted",
     "upload_again": "Upload data again",
-    "upload_or_demo": "Or, if you don't have your own data, you can:"
+    "upload_or_demo": "Or, if you don't have your own data, you can:",
+    "import_success": "Data import completed successfully."
   },
   "pages": {
     "movies": {
