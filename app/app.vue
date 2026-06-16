@@ -1,6 +1,5 @@
 <script setup lang="ts">
-const { t, locale, locales, setLocale } = useI18n()
-const availableLocales = computed(() => locales.value as { code: string; name: string }[])
+const { t, locale, setLocale } = useI18n()
 
 useHead({
   meta: [
@@ -26,8 +25,8 @@ useSeoMeta({
   twitterCard: 'summary_large_image'
 })
 
-function switchLocale(code: 'en' | 'ru') {
-  setLocale(code)
+function switchLocale(code: string) {
+  setLocale(code as 'en' | 'ru')
 }
 </script>
 
@@ -54,16 +53,16 @@ function switchLocale(code: 'en' | 'ru') {
       </template>
 
       <template #right>
-        <UButton
-          v-for="loc in availableLocales"
-          :key="loc.code"
-          size="sm"
-          :color="locale === loc.code ? 'primary' : 'neutral'"
-          variant="ghost"
-          @click="switchLocale(loc.code as 'en' | 'ru')"
-        >
-          {{ loc.name }}
-        </UButton>
+        <USelect
+          :items="[
+            { label: 'English', value: 'en' },
+            { label: 'Русский', value: 'ru' }
+          ]"
+          value-key="value"
+          class="w-32"
+          :model-value="locale"
+          @update:model-value="switchLocale"
+        />
 
         <UColorModeButton />
 
