@@ -66,7 +66,7 @@ function computeByPoints(): DirectorCard[] {
       director,
       photo: entry.photo,
       description: `Points: ${Math.round(entry.points / 10)}`,
-      descriptionTitle: entry.breakdownParts.join(' + '),
+      descriptionTitle: entry.breakdownParts.join(' + ') + ` = ${Math.round(entry.points)} → /10 → ${Math.round(entry.points / 10)}`,
       movies: entry.movies.sort((a, b) => b.userRating - a.userRating || b.year - a.year)
     }))
     .sort((a, b) => {
