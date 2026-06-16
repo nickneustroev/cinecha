@@ -9,7 +9,11 @@
     "run_again": "Запустить заново",
     "loading": "Идёт подготовка данных...",
     "top_movies": "Топ фильмов по рейтингу",
-    "last_movies_watched": "Последние просмотренные (из избранного)"
+    "last_movies_watched": "Последние просмотренные (из избранного)",
+    "upload_label": "Загрузите экспорт Letterboxd",
+    "upload_description": ".zip до 2MB",
+    "upload_error_size": "Файл должен быть меньше 2MB",
+    "upload_error_format": "Только .zip файлы"
   },
   "pages": {
     "movies": {

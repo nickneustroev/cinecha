@@ -17,7 +17,6 @@ export function useImportData() {
         return true
       }
     } catch {
-      // IndexedDB unavailable (private browsing etc.), proceed without cache
     }
     return false
   }
@@ -34,7 +33,30 @@ export function useImportData() {
       try {
         await set(STORAGE_KEY, result)
       } catch {
-        // Cache write failed — data still available in memory
+      }
+    } catch (e) {
+      status.value = 'error'
+      error.value = e instanceof Error ? e.message : 'Import failed'
+    }
+  }
+
+  async function processFromFile(file: File) {
+    status.value = 'loading'
+    error.value = null
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const result = await $fetch<ImportData>('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+      data.value = result
+      status.value = 'done'
+
+      try {
+        await set(STORAGE_KEY, result)
+      } catch {
       }
     } catch (e) {
       status.value = 'error'
@@ -49,9 +71,8 @@ export function useImportData() {
     try {
       await del(STORAGE_KEY)
     } catch {
-      // ignore
     }
   }
 
-  return { data, status, error, load, process, clear }
+  return { data, status, error, load, process, processFromFile, clear }
 }

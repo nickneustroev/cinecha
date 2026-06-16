@@ -1,0 +1,259 @@
+import { csvToObjects, toNumber } from './csv'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+import type { ImportData } from '~/types/import'
+
+const TMDB_BASE = 'https://api.themoviedb.org/3'
+const GOOD_RATING_THRESHOLD = 3
+const RATE_LIMIT = 30
+const BATCH_SIZE = 10
+
+let lastRequest = 0
+
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+function resolveToken(): string {
+  try {
+    const env = readFileSync(join(process.cwd(), '.env'), 'utf-8')
+    const line = env.split('\n').find(l => l.trim().startsWith('TMDB_TOKEN='))
+    if (line) {
+      let val = line.slice(line.indexOf('=') + 1).trim()
+      if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1)
+      return val
+    }
+  } catch { }
+  return ''
+}
+
+export function loadOrCreateCache(cachePath: string): Record<string, any> {
+  try { return JSON.parse(readFileSync(cachePath, 'utf-8')) } catch { return {} }
+}
+
+export function saveCache(cachePath: string, cache: Record<string, any>) {
+  try { writeFileSync(cachePath, JSON.stringify(cache, null, 2), 'utf-8') } catch { }
+}
+
+async function tmdbFetch(url: string, token: string): Promise<any> {
+  const now = Date.now()
+  const elapsed = now - lastRequest
+  if (elapsed < 1) {
+    await sleep(1)
+  }
+  lastRequest = Date.now()
+
+  const res = await fetch(url, {
+    headers: { Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}` },
+  })
+
+  if (res.status === 429) {
+    await sleep(2000)
+    return tmdbFetch(url, token)
+  }
+
+  if (!res.ok) return null
+  return res.json()
+}
+
+async function searchMovie(title: string, year: number, token: string): Promise<any> {
+  const data = await tmdbFetch(
+    `${TMDB_BASE}/search/movie?query=${encodeURIComponent(title)}&year=${year}&language=en-US`,
+    token
+  )
+  if (!data?.results?.length) return null
+
+  const byPop = (a: any, b: any) => (b.popularity ?? 0) - (a.popularity ?? 0)
+
+  const candidates = data.results.filter((r: any) => {
+    const rYear = r.release_date ? parseInt(r.release_date.split('-')[0], 10) : null
+    return rYear && Math.abs(rYear - year) <= 1
+  })
+
+  const exact = candidates
+    .filter((r: any) => r.title.toLowerCase() === title.toLowerCase())
+    .sort(byPop)
+  if (exact.length) return exact[0]
+
+  if (candidates.length) return candidates.sort(byPop)[0]
+
+  return data.results.sort(byPop)[0]
+}
+
+async function getMovieDetails(tmdbId: number, token: string) {
+  const data = await tmdbFetch(
+    `${TMDB_BASE}/movie/${tmdbId}?append_to_response=credits&language=en-US`,
+    token
+  )
+  if (!data) return null
+  const directors = data.credits?.crew?.filter((c: any) => c.job === 'Director') || []
+  return {
+    genres: data.genres?.map((g: any) => g.name) || [],
+    poster: data.poster_path || null,
+    directors: directors.map((d: any) => ({ name: d.name, photo: d.profile_path || null })),
+  }
+}
+
+export async function processCSVData(
+  csvFiles: { diary: string; ratings: string; watched: string },
+  cachePath: string
+): Promise<ImportData> {
+  const tmdbToken = resolveToken()
+  console.log('[process] подготовка данных началась')
+
+  const rawDiary = csvToObjects(csvFiles.diary)
+  const rawRatings = csvToObjects(csvFiles.ratings)
+  const rawWatched = csvToObjects(csvFiles.watched)
+
+  const diary: ImportData['diary'] = rawDiary.map(e => ({
+    date: e.Date || '',
+    title: e.Name || '',
+    year: toNumber(e.Year) ?? 0,
+    uri: e['Letterboxd URI'] || '',
+    rating: toNumber(e.Rating),
+    rewatch: e.Rewatch ? e.Rewatch === 'Yes' : null,
+    tags: e.Tags ? e.Tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+    watchedDate: e['Watched Date'] || ''
+  }))
+
+  const ratings: ImportData['ratings'] = rawRatings.map(e => ({
+    date: e.Date || '',
+    title: e.Name || '',
+    year: toNumber(e.Year) ?? 0,
+    uri: e['Letterboxd URI'] || '',
+    rating: toNumber(e.Rating) ?? 0
+  }))
+
+  const watched: ImportData['watched'] = rawWatched.map(e => ({
+    date: e.Date || '',
+    title: e.Name || '',
+    year: toNumber(e.Year) ?? 0,
+    uri: e['Letterboxd URI'] || ''
+  }))
+
+  console.log(`[process] csv прочитаны в json: diary ${diary.length}, ratings ${ratings.length}, watched ${watched.length}`)
+
+  const allTitles = new Set<string>()
+  for (const entry of ratings) if (entry.title) allTitles.add(entry.title)
+  for (const entry of watched) if (entry.title) allTitles.add(entry.title)
+  for (const entry of diary) if (entry.title) allTitles.add(entry.title)
+
+  let avgRating: number | null = null
+  const sum = ratings.reduce((acc, entry) => acc + entry.rating, 0)
+  if (ratings.length > 0) avgRating = Math.round((sum / ratings.length) * 100) / 100
+
+  console.log(`[process] требуется обогащение данных: для ratings с оценкой ≥ ${GOOD_RATING_THRESHOLD}`)
+
+  if (tmdbToken) {
+    console.log('[process] доступы к TMDB обнаружены')
+  } else {
+    console.log('[process] TMDB токен не найден, обогащение пропущено')
+  }
+
+  const cache = loadOrCreateCache(cachePath)
+
+  const toEnrich = ratings.filter(m => m.rating !== null && m.rating >= GOOD_RATING_THRESHOLD)
+
+  let cachedCount = 0
+  let fetchCount = 0
+  for (const movie of toEnrich) {
+    if (cache[movie.uri] && cache[movie.uri]._matched !== undefined) cachedCount++
+    else fetchCount++
+  }
+
+  let exactMatch = 0
+  let fuzzyMatch = 0
+  let notFound = 0
+
+  if (fetchCount === 0) {
+    console.log(`[process] обогащение данных: ${cachedCount} из кэша`)
+  } else {
+    console.log(`[process] обогащение данных: ${cachedCount} из кэша, ${fetchCount} через TMDB`)
+
+    const toFetch = toEnrich.filter(m => !(cache[m.uri] && cache[m.uri]._matched !== undefined))
+    const batchDelay = Math.ceil((BATCH_SIZE * 2) / RATE_LIMIT * 1000)
+
+    for (let i = 0; i < toFetch.length; i += BATCH_SIZE) {
+      const start = Date.now()
+      const batch = toFetch.slice(i, i + BATCH_SIZE)
+
+      const searches = await Promise.all(
+        batch.map(m => searchMovie(m.title, m.year, tmdbToken))
+      )
+
+      const details = await Promise.all(
+        searches.map(s => s ? getMovieDetails(s.id, tmdbToken) : null)
+      )
+
+      for (let j = 0; j < batch.length; j++) {
+        const movie = batch[j]!
+        const searchResult = searches[j]!
+        const detail = details[j]!
+
+        if (!searchResult || !detail) {
+          cache[movie.uri] = {
+            uri: movie.uri, title: movie.title, year: movie.year,
+            tmdbId: searchResult?.id ?? null, genres: [], poster: null, directors: [], _matched: false,
+          }
+          notFound++
+          continue
+        }
+
+        const isExact = searchResult.release_date
+          ? parseInt(searchResult.release_date.split('-')[0], 10) === movie.year
+            && searchResult.title.toLowerCase() === movie.title.toLowerCase()
+          : false
+
+        cache[movie.uri] = {
+          uri: movie.uri, title: movie.title, year: movie.year,
+          tmdbId: searchResult.id,
+          genres: detail.genres,
+          poster: detail.poster,
+          directors: detail.directors,
+          _matched: true,
+        }
+
+        if (isExact) exactMatch++
+        else fuzzyMatch++
+      }
+
+      if (i + BATCH_SIZE < toFetch.length) {
+        const elapsed = Date.now() - start
+        await sleep(Math.max(0, batchDelay - elapsed))
+      }
+    }
+
+    console.log(`[process] обогащение завершено: ${exactMatch} точных, ${fuzzyMatch} неточно, ${notFound} не найдено`)
+  }
+
+  const enriched: ImportData['enriched'] = []
+  for (const movie of toEnrich) {
+    const cached = cache[movie.uri]
+    if (cached) {
+      enriched.push({ ...cached, dateRated: movie.date, userRating: movie.rating })
+    }
+  }
+
+  saveCache(cachePath, cache)
+
+  const allDates = [...ratings.map(r => r.date), ...watched.map(w => w.date), ...diary.map(d => d.date)].filter(Boolean).sort() as string[]
+  const sorted = allDates.length > 0 ? allDates : []
+  const importDate = sorted.length > 0 ? sorted[0]! : null
+
+  console.log('[process] данные готовы, передаем на фронтенд')
+
+  return {
+    ratings,
+    watched,
+    diary,
+    stats: {
+      totalRatings: ratings.length,
+      totalWatched: watched.length,
+      totalDiary: diary.length,
+      uniqueTitles: allTitles.size,
+      avgRating,
+      importDate
+    },
+    enriched
+  }
+}

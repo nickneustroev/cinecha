@@ -1,24 +1,63 @@
 <script setup lang="ts">
-const { data, status, load, process } = useImportData()
+const { data, status, load, process, processFromFile } = useImportData()
+
+const uploadError = ref<string | null>(null)
+const uploadedFile = ref<File | null>(null)
 
 onMounted(async () => {
   await load()
 })
+
+async function onFileSelect(file: File | null | undefined) {
+  uploadError.value = null
+  if (!file) return
+
+  if (!file.name.toLowerCase().endsWith('.zip')) {
+    uploadError.value = 'home.upload_error_format'
+    return
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    uploadError.value = 'home.upload_error_size'
+    return
+  }
+
+  uploadedFile.value = file
+  await processFromFile(file)
+}
 </script>
 
 <template>
   <UContainer class="bg-muted border-x border-accented pb-12">
-    <div
-      v-if="status !== 'loading'"
-      class="flex justify-center py-12"
-    >
-      <UButton
-        size="xl"
-        color="primary"
-        @click="process"
+    <div class="flex flex-col items-center gap-6 py-8">
+      <UFileUpload
+        accept=".zip"
+        :model-value="uploadedFile"
+        :label="$t('home.upload_label')"
+        :description="$t('home.upload_description')"
+        class="w-full max-w-md"
+        :ui="{ base: 'min-h-36' }"
+        @update:model-value="onFileSelect"
+      />
+
+      <p
+        v-if="uploadError"
+        class="text-sm text-error"
       >
-        {{ data ? $t('home.run_again') : $t('home.run') }}
-      </UButton>
+        {{ $t(uploadError) }}
+      </p>
+
+      <div
+        v-if="status !== 'loading'"
+        class="flex gap-4"
+      >
+        <UButton
+          size="xl"
+          color="primary"
+          @click="process"
+        >
+          {{ data ? $t('home.run_again') : $t('home.run') }}
+        </UButton>
+      </div>
     </div>
 
     <div

@@ -9,7 +9,11 @@
     "run_again": "Run again",
     "loading": "Preparing data...",
     "top_movies": "Top Movies by Rating",
-    "last_movies_watched": "Last Movies Watched (from favorite)"
+    "last_movies_watched": "Last Movies Watched (from favorite)",
+    "upload_label": "Upload your Letterboxd export",
+    "upload_description": ".zip file up to 2MB",
+    "upload_error_size": "File must be under 2MB",
+    "upload_error_format": "Only .zip files are accepted"
   },
   "pages": {
     "movies": {
