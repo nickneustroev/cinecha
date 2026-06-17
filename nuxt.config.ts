@@ -7,6 +7,7 @@ export default defineNuxtConfig({
     'nuxt-charts',
     '@nuxtjs/i18n'
   ],
+  ssr: false,
 
   devtools: {
     enabled: true
@@ -16,10 +17,6 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     tmdbToken: ''
-  },
-
-  routeRules: {
-    '/': { prerender: true }
   },
 
   compatibilityDate: '2025-01-15',
