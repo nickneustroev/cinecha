@@ -10,11 +10,6 @@ const props = defineProps<{
   showTitle?: boolean
 }>()
 
-interface DirectorEntry {
-  director: string
-  count: number
-}
-
 const chartData = computed(() => {
   if (!props.data.length) return []
 

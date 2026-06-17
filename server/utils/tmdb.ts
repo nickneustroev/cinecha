@@ -9,19 +9,69 @@ const BATCH_SIZE = 10
 
 let lastRequest = 0
 
+interface TmdbMovieSearchResult {
+  id: number
+  title: string
+  release_date?: string
+  popularity?: number
+}
+
+interface TmdbSearchResponse {
+  results?: TmdbMovieSearchResult[]
+}
+
+interface TmdbGenre {
+  name: string
+}
+
+interface TmdbCrewMember {
+  job?: string
+  name: string
+  profile_path?: string | null
+}
+
+interface TmdbMovieDetailsResponse {
+  title?: string | null
+  genres?: TmdbGenre[]
+  poster_path?: string | null
+  credits?: {
+    crew?: TmdbCrewMember[]
+  }
+}
+
+interface MovieDetails {
+  title: string | null
+  genres: string[]
+  poster: string | null
+  directors: {
+    name: string
+    photo: string | null
+  }[]
+}
+
+type CachedMovie = Omit<ImportData['enriched'][number], 'dateRated' | 'userRating'>
+
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-export function loadOrCreateCache(cachePath: string): Record<string, any> {
-  try { return JSON.parse(readFileSync(cachePath, 'utf-8')) } catch { return {} }
+export function loadOrCreateCache(cachePath: string): Record<string, CachedMovie> {
+  try {
+    return JSON.parse(readFileSync(cachePath, 'utf-8')) as Record<string, CachedMovie>
+  } catch {
+    return {}
+  }
 }
 
-export function saveCache(cachePath: string, cache: Record<string, any>) {
-  try { writeFileSync(cachePath, JSON.stringify(cache, null, 2), 'utf-8') } catch { }
+export function saveCache(cachePath: string, cache: Record<string, CachedMovie>) {
+  try {
+    writeFileSync(cachePath, JSON.stringify(cache, null, 2), 'utf-8')
+  } catch (cacheError) {
+    void cacheError
+  }
 }
 
-async function tmdbFetch(url: string, token: string): Promise<any> {
+async function tmdbFetch<T>(url: string, token: string): Promise<T | null> {
   const now = Date.now()
   const elapsed = now - lastRequest
   if (elapsed < 1) {
@@ -49,25 +99,25 @@ async function tmdbFetch(url: string, token: string): Promise<any> {
     console.log('[tmdb] ошибка запроса', res.status, res.statusText)
     return null
   }
-  return res.json()
+  return await res.json() as T
 }
 
-async function searchMovie(title: string, year: number, token: string, locale: string): Promise<any> {
-  const data = await tmdbFetch(
+async function searchMovie(title: string, year: number, token: string, locale: string): Promise<TmdbMovieSearchResult | null> {
+  const data = await tmdbFetch<TmdbSearchResponse>(
     `${TMDB_BASE}/search/movie?query=${encodeURIComponent(title)}&year=${year}&language=${locale}`,
     token
   )
   if (!data?.results?.length) return null
 
-  const byPop = (a: any, b: any) => (b.popularity ?? 0) - (a.popularity ?? 0)
+  const byPop = (a: TmdbMovieSearchResult, b: TmdbMovieSearchResult) => (b.popularity ?? 0) - (a.popularity ?? 0)
 
-  const candidates = data.results.filter((r: any) => {
+  const candidates = data.results.filter((r) => {
     const rYear = r.release_date ? parseInt(r.release_date.split('-')[0], 10) : null
     return rYear && Math.abs(rYear - year) <= 1
   })
 
   const exact = candidates
-    .filter((r: any) => r.title.toLowerCase() === title.toLowerCase())
+    .filter(r => r.title.toLowerCase() === title.toLowerCase())
     .sort(byPop)
   if (exact.length) return exact[0]
 
@@ -76,18 +126,18 @@ async function searchMovie(title: string, year: number, token: string, locale: s
   return data.results.sort(byPop)[0]
 }
 
-async function getMovieDetails(tmdbId: number, token: string, locale: string) {
-  const data = await tmdbFetch(
+async function getMovieDetails(tmdbId: number, token: string, locale: string): Promise<MovieDetails | null> {
+  const data = await tmdbFetch<TmdbMovieDetailsResponse>(
     `${TMDB_BASE}/movie/${tmdbId}?append_to_response=credits&language=${locale}`,
     token
   )
   if (!data) return null
-  const directors = data.credits?.crew?.filter((c: any) => c.job === 'Director') || []
+  const directors = data.credits?.crew?.filter(c => c.job === 'Director') || []
   return {
     title: data.title || null,
-    genres: data.genres?.map((g: any) => g.name) || [],
+    genres: data.genres?.map(g => g.name) || [],
     poster: data.poster_path || null,
-    directors: directors.map((d: any) => ({ name: d.name, photo: d.profile_path || null }))
+    directors: directors.map(d => ({ name: d.name, photo: d.profile_path || null }))
   }
 }
 
@@ -180,7 +230,7 @@ export async function processCSVData(
   let cachedCount = 0
   let fetchCount = 0
   for (const movie of toEnrich) {
-    if (cache[cacheKey(movie.uri, locale)]?.hasOwnProperty('_matched')) cachedCount++
+    if (Object.prototype.hasOwnProperty.call(cache[cacheKey(movie.uri, locale)] ?? {}, '_matched')) cachedCount++
     else fetchCount++
   }
 
@@ -195,7 +245,7 @@ export async function processCSVData(
   } else {
     console.log(`[process] обогащение данных: ${cachedCount} из кэша, ${fetchCount} через TMDB`)
 
-    const toFetch = toEnrich.filter(m => !cache[cacheKey(m.uri, locale)]?.hasOwnProperty('_matched'))
+    const toFetch = toEnrich.filter(m => !Object.prototype.hasOwnProperty.call(cache[cacheKey(m.uri, locale)] ?? {}, '_matched'))
     const batchDelay = Math.ceil((BATCH_SIZE * 2) / RATE_LIMIT * 1000)
 
     for (let i = 0; i < toFetch.length; i += BATCH_SIZE) {

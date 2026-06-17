@@ -12,7 +12,6 @@ const props = defineProps<{
   showYearFilter?: boolean
 }>()
 
-const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 

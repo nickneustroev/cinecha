@@ -3,6 +3,18 @@ import { get, set, del } from 'idb-keyval'
 
 const STORAGE_KEY = 'letterboxd-import'
 
+interface FetchErrorLike {
+  data?: {
+    message?: string
+  }
+  message?: string
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+  const fetchError = error as FetchErrorLike
+  return fetchError.data?.message || fetchError.message || fallback
+}
+
 export function useImportData() {
   const status = ref<'idle' | 'loading' | 'done' | 'error'>('idle')
   const data = shallowRef<ImportData | null>(null)
@@ -16,7 +28,8 @@ export function useImportData() {
         status.value = 'done'
         return true
       }
-    } catch {
+    } catch (cacheError) {
+      void cacheError
     }
     return false
   }
@@ -35,11 +48,12 @@ export function useImportData() {
 
       try {
         await set(STORAGE_KEY, result)
-      } catch {
+      } catch (cacheError) {
+        void cacheError
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       status.value = 'idle'
-      error.value = e?.data?.message || e?.message || 'Import failed'
+      error.value = getErrorMessage(e, 'Import failed')
     }
   }
 
@@ -60,11 +74,12 @@ export function useImportData() {
 
       try {
         await set(STORAGE_KEY, result)
-      } catch {
+      } catch (cacheError) {
+        void cacheError
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       status.value = 'idle'
-      error.value = e?.data?.message || e?.message || 'Import failed'
+      error.value = getErrorMessage(e, 'Import failed')
     }
   }
 
@@ -74,7 +89,8 @@ export function useImportData() {
     error.value = null
     try {
       await del(STORAGE_KEY)
-    } catch {
+    } catch (cacheError) {
+      void cacheError
     }
   }
 
