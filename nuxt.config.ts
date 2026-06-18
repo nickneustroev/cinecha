@@ -1,6 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
@@ -11,6 +10,20 @@ export default defineNuxtConfig({
 
   devtools: {
     enabled: true
+  },
+  app: {
+    head: {
+      meta: [
+        {
+          name: 'robots',
+          content: 'noindex, nofollow, noarchive, nosnippet, noimageindex'
+        },
+        {
+          name: 'googlebot',
+          content: 'noindex, nofollow, noarchive, nosnippet, noimageindex'
+        }
+      ]
+    }
   },
 
   css: ['~/assets/css/main.css'],
