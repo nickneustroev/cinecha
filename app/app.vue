@@ -14,14 +14,13 @@ useHead({
 })
 
 const title = computed(() => `${t('nav.home')} - Cinecha`)
-const description = 'A production-ready starter template powered by Nuxt UI. Build beautiful, accessible, and performant applications in minutes, not hours.'
+const description = 'Cinecha помогает загружать экспорт Letterboxd, обогащать фильмы данными из TMDB и смотреть аналитику по фильмам, режиссерам и оценкам.'
 
 useSeoMeta({
   title,
   description,
   ogTitle: title,
   ogDescription: description,
-  ogImage: 'https://ui.nuxt.com/assets/templates/nuxt/starter-light.png',
   twitterCard: 'summary_large_image'
 })
 
@@ -68,7 +67,7 @@ function switchLocale(code: string) {
         <UColorModeButton />
 
         <UButton
-          to="https://github.com/nuxt-ui-templates/starter"
+          to="https://github.com/nickneustroev/cinecha"
           target="_blank"
           icon="i-simple-icons-github"
           aria-label="GitHub"
@@ -82,8 +81,6 @@ function switchLocale(code: string) {
       <NuxtPage />
     </UMain>
 
-    <USeparator icon="i-simple-icons-nuxtdotjs" />
-
     <UFooter>
       <template #left>
         <p class="text-sm text-muted">
@@ -93,7 +90,7 @@ function switchLocale(code: string) {
 
       <template #right>
         <UButton
-          to="https://github.com/nuxt-ui-templates/starter"
+          to="https://github.com/nickneustroev/cinecha"
           target="_blank"
           icon="i-simple-icons-github"
           aria-label="GitHub"

@@ -1,64 +1,152 @@
-# Nuxt Starter Template
+# Cinecha
 
-[![Nuxt UI](https://img.shields.io/badge/Made%20with-Nuxt%20UI-00DC82?logo=nuxt&labelColor=020420)](https://ui.nuxt.com)
+Cinecha - это Nuxt-приложение для визуализации и анализа экспорта Letterboxd. Пользователь загружает `.zip`-архив из Letterboxd, приложение читает `diary.csv`, `ratings.csv` и `watched.csv`, обогащает выбранные фильмы данными из TMDB и строит подборки, карточки режиссеров и графики.
 
-Use this template to get started with [Nuxt UI](https://ui.nuxt.com) quickly.
+## Что умеет проект
 
-- [Live demo](https://starter-template.nuxt.dev/)
-- [Documentation](https://ui.nuxt.com/docs/getting-started/installation/nuxt)
+- загружает экспорт Letterboxd в формате `.zip` размером до `2 MB`
+- поддерживает демо-режим через `public/demo.zip`
+- строит топ фильмов по рейтингу и список последних просмотренных
+- собирает подборки режиссеров по баллам и по наивысшей оценке
+- показывает графики по жанрам, рейтингам и динамике просмотров
+- хранит результат последнего импорта в браузере через `IndexedDB`
+- поддерживает интерфейс на русском и английском языках
 
-<a href="https://starter-template.nuxt.dev/" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png">
-    <img alt="Nuxt Starter Template" src="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png" width="830" height="466">
-  </picture>
-</a>
+## Как устроен сценарий работы
 
-> The starter template for Vue is on https://github.com/nuxt-ui-templates/starter-vue.
+1. На главной странице пользователь либо загружает свой архив Letterboxd, либо запускает демо-профиль.
+2. Серверный обработчик читает CSV-файлы из архива и приводит их к общему JSON-формату.
+3. Для фильмов с рейтингом не ниже выбранного порога приложение пытается получить жанры, постер, TMDB id и режиссеров из TMDB.
+4. Результат сохраняется в браузере и используется на страницах `/`, `/movies` и `/directors`.
 
-## Quick Start
+Важно:
 
-```bash [Terminal]
-npm create nuxt@latest -- -t ui
-```
+- для пользовательской загрузки TMDB должен быть доступен, иначе `/api/upload` завершится ошибкой
+- демо-режим запускается с `tmdbRequired = false`, поэтому может работать даже без живого доступа к TMDB, если данных хватает из снапшота кэша
 
-## Deploy your own
+## Стек
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-name=starter&repository-url=https%3A%2F%2Fgithub.com%2Fnuxt-ui-templates%2Fstarter&demo-image=https%3A%2F%2Fui.nuxt.com%2Fassets%2Ftemplates%2Fnuxt%2Fstarter-dark.png&demo-url=https%3A%2F%2Fstarter-template.nuxt.dev%2F&demo-title=Nuxt%20Starter%20Template&demo-description=A%20minimal%20template%20to%20get%20started%20with%20Nuxt%20UI.)
+- `Nuxt 4`
+- `@nuxt/ui`
+- `@nuxtjs/i18n`
+- `nuxt-charts`
+- `Tailwind CSS 4`
+- `undici` для запросов к TMDB
+- `adm-zip` и `jszip` для работы с архивами
 
-## Setup
-
-Make sure to install the dependencies:
+## Запуск локально
 
 ```bash
 pnpm install
-```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
 pnpm dev
 ```
 
-## Production
+Приложение поднимется на `http://localhost:3000`.
 
-Build the application for production:
+Для production-сборки:
 
 ```bash
 pnpm build
-```
-
-Locally preview production build:
-
-```bash
 pnpm preview
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+## Переменные окружения
 
-## Renovate integration
+Проект читает переменные из `.env`.
 
-Install [Renovate GitHub app](https://github.com/apps/renovate/installations/select_target) on your repository and you are good to go.
+```env
+NUXT_TMDB_TOKEN=Bearer <tmdb-api-read-access-token>
+NUXT_TMDB_PROXY=http://user:password@host:port
+```
+
+`NUXT_TMDB_TOKEN`
+
+- токен TMDB API Read Access Token
+- без него пользовательский импорт не сможет догружать данные из TMDB
+
+`NUXT_TMDB_PROXY`
+
+- необязательный HTTP(S)-proxy для запросов к TMDB
+- при наличии токена приложение сначала проверяет proxy, а затем использует его только если тестовый запрос успешен
+
+## Скрипты
+
+```bash
+pnpm dev
+pnpm build
+pnpm preview
+pnpm lint
+pnpm typecheck
+```
+
+## Структура проекта
+
+```text
+app/
+  components/        UI-компоненты, карточки и графики
+  composables/       загрузка импорта и сбор аналитики
+  pages/             главная, фильмы, режиссеры
+  utils/             расчеты аналитики, оценки, оценка времени обработки
+server/
+  api/               загрузка архива, демо-обработка, выдача JSON-датасетов
+  data/              статические JSON-файлы, собранные из локального экспорта
+  utils/             парсинг CSV и интеграция с TMDB
+public/
+  demo.zip           демо-архив Letterboxd
+  tmdb-cache.json    build-safe снапшот TMDB-кэша
+data/
+  tmdb-cache.runtime.json  dev-only кэш TMDB, создается во время локальной работы
+```
+
+## API и данные
+
+### `POST /api/upload`
+
+Принимает multipart-форму с файлом `file` и полем `minRating`.
+
+Ограничения:
+
+- только `.zip`
+- размер до `2 MB`
+- внутри архива обязательны `diary.csv`, `ratings.csv`, `watched.csv`
+
+### `POST /api/process`
+
+Запускает обработку демо-архива из `public/demo.zip`. Принимает JSON с полями:
+
+- `minRating`
+- `tmdbRequired`
+
+### `GET /api/data/[slug]`
+
+Возвращает подготовленные JSON-датасеты из `server/data`:
+
+- `diary`
+- `movies`
+- `profile`
+- `ratings`
+- `watched`
+- `watchlist`
+
+## Кэширование
+
+- итог последнего импорта сохраняется в `IndexedDB` под ключом `letterboxd-import`
+- во время разработки TMDB-кэш может дописываться в `data/tmdb-cache.runtime.json`
+- после `pnpm build` приложение читает только снапшот `public/tmdb-cache.json`, а runtime-кэш в сборку не закладывается
+
+## Особенности аналитики
+
+- в обогащение попадают только фильмы с рейтингом не ниже `minRating`
+- для режиссеров считается метрика "баллы" на основе `rating^4`
+- часть графиков строится только по фильмам из "избранного", то есть по отфильтрованному списку `enriched`
+- для некоторых временных графиков самый ранний день импорта исключается, чтобы не смешивать массовую историческую загрузку с реальным порядком просмотров
+
+## Известные ограничения
+
+- проект работает в режиме `ssr: false`, поэтому основная логика интерфейса полностью клиентская
+- без TMDB нет полноценного пользовательского импорта, потому что карточки и аналитика завязаны на обогащенные данные
+- `app/app.vue` пока частично содержит следы стартового шаблона Nuxt UI в SEO-описании и внешних GitHub-ссылках
+
+## Лицензия
+
+MIT
