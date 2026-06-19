@@ -234,19 +234,15 @@ async function onFileSelect(file: File | null | undefined) {
           link="/directors?tab=highest"
         />
         <template v-if="chartAnalytics">
+          <ChartsWatchedAllByRating :items="chartAnalytics.watchedAllByRating" />
+          <ChartsAllMoviesCountByMonthWatched :items="chartAnalytics.allMoviesCountByMonthWatched" />
+          <ChartsRatingStackedByYears :items="chartAnalytics.ratingStackedByYears" />
+          <ChartsRatingShareByYears :items="chartAnalytics.ratingShareByYears" />
           <ChartsFavoritesByGenres :items="chartAnalytics.favoritesByGenres" />
           <ChartsGenreShareByYears
             :items="chartAnalytics.genreShareByYears"
             :categories-data="chartAnalytics.genreCategories"
           />
-          <ChartsGenreShareByWatchedYear
-            :items="chartAnalytics.genreShareByWatchedYear"
-            :categories-data="chartAnalytics.genreCategories"
-          />
-          <ChartsRatingStackedByYears :items="chartAnalytics.ratingStackedByYears" />
-          <ChartsRatingShareByYears :items="chartAnalytics.ratingShareByYears" />
-          <ChartsWatchedAllByRating :items="chartAnalytics.watchedAllByRating" />
-          <ChartsAllMoviesCountByMonthWatched :items="chartAnalytics.allMoviesCountByMonthWatched" />
         </template>
       </div>
     </template>
