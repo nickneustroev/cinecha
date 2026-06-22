@@ -15,6 +15,7 @@ let lastRequest = 0
 interface TmdbMovieSearchResult {
   id: number
   title: string
+  original_title?: string
   release_date?: string
   popularity?: number
 }
@@ -52,7 +53,19 @@ interface MovieDetails {
   }[]
 }
 
-type CachedMovie = Omit<ImportData['enriched'][number], 'dateRated' | 'userRating'>
+type MatchStatus = 'exact' | 'probable' | 'ambiguous' | 'not_found'
+
+interface MatchResult {
+  candidate: TmdbMovieSearchResult | null
+  status: MatchStatus
+  score: number
+}
+
+type CachedMovie = Omit<ImportData['enriched'][number], 'dateRated' | 'userRating'> & {
+  matchStatus?: MatchStatus
+  matchScore?: number
+  matchVersion?: number
+}
 
 interface CachePaths {
   runtimePath: string
@@ -61,6 +74,7 @@ interface CachePaths {
 
 const IS_DEV = import.meta.dev
 const TMDB_TIMEOUT_MS = 5000
+const MATCH_VERSION = 2
 const proxyAgents = new Map<string, ProxyAgent>()
 
 interface TmdbRequestOptions {
@@ -185,29 +199,163 @@ async function tmdbFetch<T>(url: string, token: string, proxyUrl?: string): Prom
   return await res.json() as T
 }
 
-async function searchMovie(title: string, year: number, token: string, locale: string, proxyUrl?: string): Promise<TmdbMovieSearchResult | null> {
-  const data = await tmdbFetch<TmdbSearchResponse>(
+function normalizeTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[’'`]/g, '\'')
+    .replace(/&/g, ' and ')
+    .replace(/[:\-–—/,!.?()[\]]/g, ' ')
+    .replace(/\bii\b/g, '2')
+    .replace(/\biii\b/g, '3')
+    .replace(/\biv\b/g, '4')
+    .replace(/\b(the|a|an)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function getReleaseYear(releaseDate?: string): number | null {
+  if (!releaseDate) {
+    return null
+  }
+
+  const year = parseInt(releaseDate.split('-')[0] ?? '', 10)
+  return Number.isFinite(year) ? year : null
+}
+
+function toTokenSet(title: string): Set<string> {
+  return new Set(title.split(' ').filter(Boolean))
+}
+
+function overlapRatio(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) {
+    return 0
+  }
+
+  let intersection = 0
+  for (const token of a) {
+    if (b.has(token)) {
+      intersection++
+    }
+  }
+
+  return intersection / Math.max(a.size, b.size)
+}
+
+function scoreCandidate(inputTitle: string, inputYear: number, candidate: TmdbMovieSearchResult): number {
+  let score = 0
+
+  const inputNorm = normalizeTitle(inputTitle)
+  const titleNorm = normalizeTitle(candidate.title)
+  const originalNorm = normalizeTitle(candidate.original_title ?? '')
+  const resultYear = getReleaseYear(candidate.release_date)
+
+  if (titleNorm === inputNorm) {
+    score += 100
+  } else if (originalNorm && originalNorm === inputNorm) {
+    score += 95
+  } else if (titleNorm.startsWith(inputNorm) || inputNorm.startsWith(titleNorm)) {
+    score += 70
+  } else {
+    const inputTokens = toTokenSet(inputNorm)
+    const titleTokens = toTokenSet(titleNorm)
+    const originalTokens = toTokenSet(originalNorm)
+    const bestOverlap = Math.max(
+      overlapRatio(inputTokens, titleTokens),
+      overlapRatio(inputTokens, originalTokens)
+    )
+
+    if (bestOverlap >= 0.8) {
+      score += 40
+    } else if (bestOverlap <= 0.3) {
+      score -= 80
+    }
+  }
+
+  if (resultYear === inputYear) {
+    score += 40
+  } else if (resultYear !== null) {
+    const yearDiff = Math.abs(resultYear - inputYear)
+    if (yearDiff === 1) {
+      score += 20
+    } else if (yearDiff === 2) {
+      score += 5
+    } else {
+      score -= 40
+    }
+  } else if (score < 100) {
+    score -= 60
+  }
+
+  const popularityBonus = Math.min(10, Math.log10((candidate.popularity ?? 0) + 1) * 3)
+  score += popularityBonus
+
+  const hasNumberMismatch = /\b\d+\b/.test(inputNorm) !== /\b\d+\b/.test(titleNorm)
+  if (hasNumberMismatch) {
+    score -= 20
+  }
+
+  return score
+}
+
+function resolveMatchStatus(score: number): MatchStatus {
+  if (score >= 130) {
+    return 'exact'
+  }
+  if (score >= 100) {
+    return 'probable'
+  }
+  if (score >= 75) {
+    return 'ambiguous'
+  }
+  return 'not_found'
+}
+
+function pickBestCandidate(inputTitle: string, inputYear: number, results: TmdbMovieSearchResult[]): MatchResult {
+  if (results.length === 0) {
+    return { candidate: null, status: 'not_found', score: 0 }
+  }
+
+  const ranked = results
+    .map(candidate => ({
+      candidate,
+      score: scoreCandidate(inputTitle, inputYear, candidate)
+    }))
+    .sort((a, b) => b.score - a.score)
+
+  const best = ranked[0]!
+  const second = ranked[1]
+
+  let status = resolveMatchStatus(best.score)
+  if (second && best.score - second.score < 15 && status !== 'not_found') {
+    status = 'ambiguous'
+  }
+
+  if (status === 'ambiguous' || status === 'not_found') {
+    return { candidate: null, status, score: best.score }
+  }
+
+  return { candidate: best.candidate, status, score: best.score }
+}
+
+async function searchMovie(title: string, year: number, token: string, locale: string, proxyUrl?: string): Promise<MatchResult> {
+  const yearScoped = await tmdbFetch<TmdbSearchResponse>(
     `${TMDB_BASE}/search/movie?query=${encodeURIComponent(title)}&year=${year}&language=${locale}`,
     token,
     proxyUrl
   )
-  if (!data?.results?.length) return null
+  const firstMatch = pickBestCandidate(title, year, yearScoped?.results ?? [])
+  if (firstMatch.status === 'exact' || firstMatch.status === 'probable') {
+    return firstMatch
+  }
 
-  const byPop = (a: TmdbMovieSearchResult, b: TmdbMovieSearchResult) => (b.popularity ?? 0) - (a.popularity ?? 0)
-
-  const candidates = data.results.filter((r) => {
-    const rYear = r.release_date ? parseInt(r.release_date.split('-')[0] ?? '', 10) : null
-    return rYear && Math.abs(rYear - year) <= 1
-  })
-
-  const exact = candidates
-    .filter(r => r.title.toLowerCase() === title.toLowerCase())
-    .sort(byPop)
-  if (exact.length) return exact[0] ?? null
-
-  if (candidates.length) return candidates.sort(byPop)[0] ?? null
-
-  return data.results.sort(byPop)[0] ?? null
+  const titleOnly = await tmdbFetch<TmdbSearchResponse>(
+    `${TMDB_BASE}/search/movie?query=${encodeURIComponent(title)}&language=${locale}`,
+    token,
+    proxyUrl
+  )
+  return pickBestCandidate(title, year, titleOnly?.results ?? [])
 }
 
 async function getMovieDetails(tmdbId: number, token: string, locale: string, proxyUrl?: string): Promise<MovieDetails | null> {
@@ -228,6 +376,12 @@ async function getMovieDetails(tmdbId: number, token: string, locale: string, pr
 
 function cacheKey(uri: string, locale: string): string {
   return `${uri}:${locale}`
+}
+
+function isResolvedCacheEntry(entry?: CachedMovie): boolean {
+  return entry?.matchVersion === MATCH_VERSION
+    && entry.matchStatus !== undefined
+    && entry.matchStatus !== 'ambiguous'
 }
 
 export async function processCSVData(
@@ -326,8 +480,11 @@ export async function processCSVData(
   let cachedCount = 0
   let fetchCount = 0
   for (const movie of toEnrich) {
-    if (Object.prototype.hasOwnProperty.call(cache[cacheKey(movie.uri, locale)] ?? {}, '_matched')) cachedCount++
-    else fetchCount++
+    if (isResolvedCacheEntry(cache[cacheKey(movie.uri, locale)])) {
+      cachedCount++
+    } else {
+      fetchCount++
+    }
   }
 
   let exactMatch = 0
@@ -341,7 +498,7 @@ export async function processCSVData(
   } else {
     console.log(`[process] обогащение данных: ${cachedCount} из кэша, ${fetchCount} через TMDB`)
 
-    const toFetch = toEnrich.filter(m => !Object.prototype.hasOwnProperty.call(cache[cacheKey(m.uri, locale)] ?? {}, '_matched'))
+    const toFetch = toEnrich.filter(m => !isResolvedCacheEntry(cache[cacheKey(m.uri, locale)]))
     const batchDelay = Math.ceil((BATCH_SIZE * 2) / RATE_LIMIT * 1000)
 
     for (let i = 0; i < toFetch.length; i += BATCH_SIZE) {
@@ -353,7 +510,13 @@ export async function processCSVData(
       )
 
       const details = await Promise.all(
-        searches.map(s => s ? getMovieDetails(s.id, tmdbToken, locale, shouldUseProxy ? proxyUrl : undefined) : null)
+        searches.map((search) => {
+          if (!search.candidate || (search.status !== 'exact' && search.status !== 'probable')) {
+            return null
+          }
+
+          return getMovieDetails(search.candidate.id, tmdbToken, locale, shouldUseProxy ? proxyUrl : undefined)
+        })
       )
 
       for (let j = 0; j < batch.length; j++) {
@@ -362,31 +525,39 @@ export async function processCSVData(
         const detail = details[j]!
         const key = cacheKey(movie.uri, locale)
 
-        if (!searchResult || !detail) {
+        if (!searchResult.candidate || !detail) {
           cache[key] = {
             uri: movie.uri, title: movie.title, year: movie.year,
-            tmdbId: searchResult?.id ?? null, genres: [], poster: null, directors: [], _matched: false
+            tmdbId: searchResult.candidate?.id ?? null,
+            genres: [],
+            poster: null,
+            directors: [],
+            _matched: false,
+            matchStatus: searchResult.status,
+            matchScore: searchResult.score,
+            matchVersion: MATCH_VERSION
           }
           notFound++
           continue
         }
 
-        const isExact = searchResult.release_date
-          ? parseInt(searchResult.release_date.split('-')[0] ?? '', 10) === movie.year
-          && (detail.title ?? searchResult.title).toLowerCase() === movie.title.toLowerCase()
-          : false
-
         cache[key] = {
           uri: movie.uri, title: detail.title ?? movie.title, year: movie.year,
-          tmdbId: searchResult.id,
+          tmdbId: searchResult.candidate.id,
           genres: detail.genres,
           poster: detail.poster,
           directors: detail.directors,
-          _matched: true
+          _matched: true,
+          matchStatus: searchResult.status,
+          matchScore: searchResult.score,
+          matchVersion: MATCH_VERSION
         }
 
-        if (isExact) exactMatch++
-        else fuzzyMatch++
+        if (searchResult.status === 'exact') {
+          exactMatch++
+        } else {
+          fuzzyMatch++
+        }
       }
 
       if (i + BATCH_SIZE < toFetch.length) {
