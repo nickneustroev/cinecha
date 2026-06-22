@@ -5,18 +5,11 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { ProxyAgent, fetch as undiciFetch } from 'undici'
 import type { RequestInit as UndiciRequestInit, Response as UndiciResponse } from 'undici'
 import type {
-  DiaryEntry,
-  DiaryEntryRaw,
   EnrichedImportData,
-  EnrichedMovie,
   ImportData,
-  LegacyImportData,
   Movie,
-  RawImportData,
   RatingEntry,
-  RatingEntryRaw,
-  Watch,
-  WatchedEntry
+  Watch
 } from '~/types/import'
 
 const TMDB_BASE = 'https://api.themoviedb.org/3'
@@ -126,6 +119,30 @@ type CachedMovie = Omit<Movie, 'id' | 'movieUri' | 'matched'> & {
 interface CachePaths {
   runtimePath: string
   snapshotPath: string
+}
+
+interface ParsedRatingEntry {
+  date: string
+  title: string
+  year: number
+  movieUri: string | null
+  rating: number
+}
+
+interface ParsedDiaryEntry {
+  date: string
+  title: string
+  year: number
+  diaryUri: string | null
+  rating: number | null
+  rewatch: boolean | null
+  tags: string[]
+  watchedDate: string | null
+}
+
+interface ParsedImportData {
+  ratings: ParsedRatingEntry[]
+  diary: ParsedDiaryEntry[]
 }
 
 const IS_DEV = import.meta.dev
@@ -780,12 +797,12 @@ function getMovieIdForRawEntry(entry: { title: string, year: number, movieUri?: 
   return entry.movieUri ? `lb:movie:${entry.movieUri}` : getFallbackMovieId(entry.title, entry.year)
 }
 
-function parseRawImportData(csvFiles: { diary: string, ratings: string, watched: string }): RawImportData {
+function parseRawImportData(csvFiles: { diary: string, ratings: string, watched: string }): ParsedImportData {
   const rawDiary = csvToObjects(csvFiles.diary)
   const rawRatings = csvToObjects(csvFiles.ratings)
 
   return {
-    diary: rawDiary.map((entry): DiaryEntryRaw => ({
+    diary: rawDiary.map((entry): ParsedDiaryEntry => ({
       date: entry.Date || '',
       title: entry.Name || '',
       year: toNumber(entry.Year) ?? 0,
@@ -795,7 +812,7 @@ function parseRawImportData(csvFiles: { diary: string, ratings: string, watched:
       tags: entry.Tags ? entry.Tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
       watchedDate: toNullableString(entry['Watched Date'])
     })),
-    ratings: rawRatings.map((entry): RatingEntryRaw => ({
+    ratings: rawRatings.map((entry): ParsedRatingEntry => ({
       date: entry.Date || '',
       title: entry.Name || '',
       year: toNumber(entry.Year) ?? 0,
@@ -803,38 +820,6 @@ function parseRawImportData(csvFiles: { diary: string, ratings: string, watched:
       rating: toNumber(entry.Rating) ?? 0
     }))
   }
-}
-
-function buildLegacyRawData(raw: RawImportData): Omit<LegacyImportData, 'enriched'> {
-  const ratings: RatingEntry[] = raw.ratings.map(entry => ({
-    date: entry.date,
-    title: entry.title,
-    year: entry.year,
-    uri: entry.movieUri ?? '',
-    rating: entry.rating
-  }))
-
-  const watched: WatchedEntry[] = raw.diary
-    .filter((entry): entry is DiaryEntryRaw & { watchedDate: string } => !!entry.watchedDate)
-    .map(entry => ({
-      date: entry.watchedDate,
-      title: entry.title,
-      year: entry.year,
-      uri: ''
-    }))
-
-  const diary: DiaryEntry[] = raw.diary.map(entry => ({
-    date: entry.date,
-    title: entry.title,
-    year: entry.year,
-    uri: entry.diaryUri ?? '',
-    rating: entry.rating,
-    rewatch: entry.rewatch,
-    tags: entry.tags,
-    watchedDate: entry.watchedDate ?? ''
-  }))
-
-  return { ratings, watched, diary }
 }
 
 function findExistingWatchForRating(
@@ -851,7 +836,7 @@ function findExistingWatchForRating(
   return candidates.length === 1 ? candidates[0]! : null
 }
 
-function buildNormalizedImportData(raw: RawImportData): ImportData {
+function buildNormalizedImportData(raw: ParsedImportData): ImportData {
   const moviesById = new Map<string, ImportData['movies'][number]>()
   const moviesByFallbackKey = new Map<string, ImportData['movies'][number]>()
   const watches: Watch[] = []
@@ -960,7 +945,6 @@ function buildNormalizedImportData(raw: RawImportData): ImportData {
   const importDate = allDates.length > 0 ? allDates[0]! : null
 
   return {
-    raw,
     movies: Array.from(new Set(moviesById.values())),
     watches,
     stats: {
@@ -976,65 +960,13 @@ function buildNormalizedImportData(raw: RawImportData): ImportData {
   }
 }
 
-function buildLegacyEnrichedMovies(
-  movies: Movie[],
-  watches: Watch[]
-): EnrichedMovie[] {
-  const movieMap = new Map(movies.map(movie => [movie.id, movie] as const))
-  const ratedWatches = watches.filter(watch => watch.rating !== null)
-  const latestWatchByMovie = new Map<string, Watch>()
-
-  for (const watch of ratedWatches) {
-    const existing = latestWatchByMovie.get(watch.movieId)
-    if (!existing) {
-      latestWatchByMovie.set(watch.movieId, watch)
-      continue
-    }
-
-    const existingDate = existing.loggedDate ?? existing.watchedDate ?? ''
-    const candidateDate = watch.loggedDate ?? watch.watchedDate ?? ''
-    if (candidateDate > existingDate || (candidateDate === existingDate && watch.id > existing.id)) {
-      latestWatchByMovie.set(watch.movieId, watch)
-    }
-  }
-
-  return Array.from(latestWatchByMovie.entries())
-    .map(([movieId, watch]) => {
-      const movie = movieMap.get(movieId)
-      if (!movie || watch.rating === null) {
-        return null
-      }
-
-      return {
-        uri: movie.movieUri ?? '',
-        title: movie.title,
-        year: movie.year,
-        dateRated: watch.loggedDate ?? watch.watchedDate,
-        userRating: watch.rating,
-        tmdbId: movie.tmdbId,
-        genres: movie.genres,
-        poster: movie.poster,
-        directors: movie.directors,
-        _matched: movie.matched
-      } satisfies EnrichedMovie
-    })
-    .filter((movie): movie is EnrichedMovie => movie !== null)
-}
-
 function buildEnrichedImportData(
   data: ImportData,
   movies: Movie[]
 ): EnrichedImportData {
-  const legacyBase = buildLegacyRawData(data.raw)
-
   return {
-    raw: data.raw,
     movies,
     watches: data.watches,
-    legacy: {
-      ...legacyBase,
-      enriched: buildLegacyEnrichedMovies(movies, data.watches)
-    },
     stats: data.stats
   }
 }

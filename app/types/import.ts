@@ -1,27 +1,3 @@
-export interface RatingEntryRaw {
-  date: string
-  title: string
-  year: number
-  movieUri: string | null
-  rating: number
-}
-
-export interface DiaryEntryRaw {
-  date: string
-  title: string
-  year: number
-  diaryUri: string | null
-  rating: number | null
-  rewatch: boolean | null
-  tags: string[]
-  watchedDate: string | null
-}
-
-export interface RawImportData {
-  ratings: RatingEntryRaw[]
-  diary: DiaryEntryRaw[]
-}
-
 export interface MovieDirector {
   name: string
   photo: string | null
@@ -65,7 +41,6 @@ export interface ImportStats {
 }
 
 export interface ImportData {
-  raw: RawImportData
   movies: MovieBase[]
   watches: Watch[]
   stats: ImportStats
@@ -118,17 +93,8 @@ export interface EnrichedMovie {
   _matched: boolean
 }
 
-export interface LegacyImportData {
-  enriched: EnrichedMovie[]
-  ratings: RatingEntry[]
-  watched: WatchedEntry[]
-  diary: DiaryEntry[]
-}
-
 export interface EnrichedImportData {
-  raw: RawImportData
   movies: Movie[]
   watches: Watch[]
-  legacy: LegacyImportData
   stats: ImportStats
 }

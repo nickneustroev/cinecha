@@ -1,5 +1,5 @@
-import { buildRatingCategories, ratingKeys, ratingLookup, type RatingEntry } from '~/utils/ratings'
-import type { EnrichedImportData, EnrichedMovie, Movie, Watch, WatchedEntry } from '~/types/import'
+import { buildRatingCategories, ratingKeys, ratingLookup } from '~/utils/ratings'
+import type { EnrichedImportData, EnrichedMovie, Movie, Watch } from '~/types/import'
 
 const GENRE_COLORS = [
   '#2563eb', '#dc2626', '#16a34a', '#ca8a04', '#9333ea',
@@ -104,7 +104,7 @@ export function buildHomeAnalytics(data: EnrichedImportData, options: HomeAnalyt
     directorPointsLabel = 'Points',
     directorHighestLabel = 'Highest rated movie'
   } = options
-  const ratedMovies = data.legacy.enriched
+  const ratedMovies = buildRatedMovies(data.movies, data.watches)
   const moviesByRating = sortMoviesByRating(ratedMovies)
   const moviesByDateRated = buildMoviesByWatchDate(data.movies, data.watches, data.stats.importDate)
   const directorMap = buildDirectorAggregateMap(ratedMovies)
@@ -120,6 +120,56 @@ export function buildHomeAnalytics(data: EnrichedImportData, options: HomeAnalyt
 
 export function formatDirectorPoints(points: number) {
   return (Math.round(points) / 10).toFixed(1)
+}
+
+function getWatchSortDate(watch: Watch) {
+  return watch.watchedDate ?? watch.loggedDate ?? ''
+}
+
+function buildRatedMovies(movies: Movie[], watches: Watch[]) {
+  const movieMap = new Map(movies.map(movie => [movie.id, movie] as const))
+  const latestWatchByMovie = new Map<string, Watch>()
+
+  for (const watch of watches) {
+    if (watch.rating === null) {
+      continue
+    }
+
+    const existing = latestWatchByMovie.get(watch.movieId)
+    if (!existing) {
+      latestWatchByMovie.set(watch.movieId, watch)
+      continue
+    }
+
+    const existingDate = getWatchSortDate(existing)
+    const candidateDate = getWatchSortDate(watch)
+
+    if (candidateDate > existingDate || (candidateDate === existingDate && watch.id > existing.id)) {
+      latestWatchByMovie.set(watch.movieId, watch)
+    }
+  }
+
+  return Array.from(latestWatchByMovie.entries())
+    .map(([movieId, watch]) => {
+      const movie = movieMap.get(movieId)
+      if (!movie || watch.rating === null) {
+        return null
+      }
+
+      return {
+        uri: movie.movieUri ?? `${movie.id}:${getWatchSortDate(watch) || 'unknown'}`,
+        title: movie.title,
+        year: movie.year,
+        dateRated: watch.watchedDate ?? watch.loggedDate,
+        userRating: watch.rating,
+        tmdbId: movie.tmdbId,
+        genres: movie.genres,
+        poster: movie.poster,
+        directors: movie.directors,
+        _matched: movie.matched
+      } satisfies EnrichedMovie
+    })
+    .filter((movie): movie is EnrichedMovie => movie !== null)
 }
 
 function buildMoviesByWatchDate(movies: Movie[], watches: Watch[], importDate?: string | null) {
@@ -253,7 +303,7 @@ function buildGenreAnalytics(movies: EnrichedMovie[]) {
 }
 
 function buildChartAnalytics(data: EnrichedImportData, directorMap: Map<string, DirectorAggregate>) {
-  const ratedMovies = data.legacy.enriched
+  const ratedMovies = buildRatedMovies(data.movies, data.watches)
   const { genreCategories, favoritesByGenres, genreShareByYears, genreShareByWatchedYear } = buildGenreAnalytics(ratedMovies)
 
   return {
@@ -261,11 +311,11 @@ function buildChartAnalytics(data: EnrichedImportData, directorMap: Map<string, 
     genreShareByYears,
     genreShareByWatchedYear,
     genreCategories,
-    ratingStackedByYears: buildRatingStackedByYears(data.legacy.ratings),
-    ratingShareByYears: buildRatingShareByYears(data.legacy.ratings),
+    ratingStackedByYears: buildRatingStackedByYears(ratedMovies),
+    ratingShareByYears: buildRatingShareByYears(ratedMovies),
     ratingCategories: buildRatingCategories(),
-    watchedAllByRating: buildWatchedAllByRating(data.legacy.ratings),
-    allMoviesCountByMonthWatched: buildAllMoviesCountByMonthWatched(data.legacy.watched),
+    watchedAllByRating: buildWatchedAllByRating(ratedMovies),
+    allMoviesCountByMonthWatched: buildAllMoviesCountByMonthWatched(data.watches),
     directorsCount: buildDirectorsCountChart(directorMap),
     directorsPoints: buildDirectorsPointsChart(directorMap),
     directorsAvgRating: buildDirectorsAvgRatingChart(directorMap),
@@ -374,8 +424,8 @@ function buildPercentRows(yearMap: Map<number, Map<string, number>>, keys: strin
     .filter((item): item is PercentByYearDatum => item !== null)
 }
 
-function buildRatingStackedByYears(ratings: RatingEntry[]) {
-  const buckets = buildRatingYearBuckets(ratings)
+function buildRatingStackedByYears(movies: EnrichedMovie[]) {
+  const buckets = buildRatingYearBuckets(movies)
 
   return buckets.sortedYears.map((year) => {
     const ratingMap = buckets.map.get(year)!
@@ -389,8 +439,8 @@ function buildRatingStackedByYears(ratings: RatingEntry[]) {
   })
 }
 
-function buildRatingShareByYears(ratings: RatingEntry[]) {
-  const buckets = buildRatingYearBuckets(ratings)
+function buildRatingShareByYears(movies: EnrichedMovie[]) {
+  const buckets = buildRatingYearBuckets(movies)
 
   return buckets.sortedYears.map((year) => {
     const ratingMap = buckets.map.get(year)!
@@ -419,14 +469,14 @@ function buildRatingShareByYears(ratings: RatingEntry[]) {
   })
 }
 
-function buildRatingYearBuckets(ratings: RatingEntry[]) {
+function buildRatingYearBuckets(movies: EnrichedMovie[]) {
   const map = new Map<number, Map<number, number>>()
 
-  for (const entry of ratings) {
-    if (entry.year < 1990) continue
-    const bucket = map.get(entry.year) ?? new Map<number, number>()
-    bucket.set(entry.rating, (bucket.get(entry.rating) ?? 0) + 1)
-    map.set(entry.year, bucket)
+  for (const movie of movies) {
+    if (movie.year < 1990) continue
+    const bucket = map.get(movie.year) ?? new Map<number, number>()
+    bucket.set(movie.userRating, (bucket.get(movie.userRating) ?? 0) + 1)
+    map.set(movie.year, bucket)
   }
 
   return {
@@ -435,11 +485,11 @@ function buildRatingYearBuckets(ratings: RatingEntry[]) {
   }
 }
 
-function buildWatchedAllByRating(ratings: RatingEntry[]) {
+function buildWatchedAllByRating(movies: EnrichedMovie[]) {
   const map = new Map<number, number>()
 
-  for (const entry of ratings) {
-    map.set(entry.rating, (map.get(entry.rating) ?? 0) + 1)
+  for (const movie of movies) {
+    map.set(movie.userRating, (map.get(movie.userRating) ?? 0) + 1)
   }
 
   const result: RatingCountDatum[] = []
@@ -451,19 +501,20 @@ function buildWatchedAllByRating(ratings: RatingEntry[]) {
   return result
 }
 
-function buildAllMoviesCountByMonthWatched(watched: WatchedEntry[]) {
+function buildAllMoviesCountByMonthWatched(watches: Watch[]) {
+  const watched = watches.filter((watch): watch is Watch & { watchedDate: string } => !!watch.watchedDate)
   if (!watched.length) return []
 
-  let earliestDate = watched[0]!.date
+  let earliestDate = watched[0]!.watchedDate
   for (const entry of watched) {
-    if (entry.date < earliestDate) earliestDate = entry.date
+    if (entry.watchedDate < earliestDate) earliestDate = entry.watchedDate
   }
 
   const map = new Map<string, number>()
 
   for (const entry of watched) {
-    if (entry.date === earliestDate) continue
-    const key = entry.date.slice(0, 7)
+    if (entry.watchedDate === earliestDate) continue
+    const key = entry.watchedDate.slice(0, 7)
     map.set(key, (map.get(key) ?? 0) + 1)
   }
 
