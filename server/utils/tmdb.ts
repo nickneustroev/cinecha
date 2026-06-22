@@ -479,6 +479,101 @@ async function getMovieDetails(tmdbId: number, token: string, locale: string, pr
   }
 }
 
+export async function debugMatchMovie(
+  movie: Pick<ImportData['ratings'][number], 'title' | 'year' | 'uri'>,
+  locale = 'en-US'
+): Promise<CachedMovie> {
+  const { tmdbToken, tmdbProxy } = useRuntimeConfig()
+
+  if (!tmdbToken) {
+    throw createError({ statusCode: 503, statusMessage: 'TMDB unavailable', message: 'Не удается загрузить данные из базы TMDB' })
+  }
+
+  const proxyUrl = tmdbProxy.trim() || undefined
+  let shouldUseProxy = false
+
+  if (proxyUrl) {
+    shouldUseProxy = await probeTmdbProxy(proxyUrl, tmdbToken)
+  }
+
+  let tmdbAvailable = false
+  try {
+    const testRes = await undiciFetch(`${TMDB_BASE}/configuration`, createTmdbFetchOptions(tmdbToken, {
+      proxyUrl: shouldUseProxy ? proxyUrl : undefined,
+      timeoutMs: TMDB_TIMEOUT_MS
+    }))
+    tmdbAvailable = testRes.ok
+  } catch {
+    tmdbAvailable = false
+  }
+
+  if (!tmdbAvailable) {
+    throw createError({ statusCode: 503, statusMessage: 'TMDB unavailable', message: 'Не удается загрузить данные из базы TMDB' })
+  }
+
+  const searchResult = await searchMovie(
+    movie.title,
+    movie.year,
+    movie.uri,
+    tmdbToken,
+    locale,
+    shouldUseProxy ? proxyUrl : undefined
+  )
+
+  if (!searchResult.candidate || (searchResult.status !== 'exact' && searchResult.status !== 'probable')) {
+    return {
+      uri: movie.uri,
+      title: movie.title,
+      year: movie.year,
+      tmdbId: searchResult.candidate?.id ?? null,
+      genres: [],
+      poster: null,
+      directors: [],
+      _matched: false,
+      matchStatus: searchResult.status,
+      matchScore: searchResult.score,
+      matchVersion: MATCH_VERSION
+    }
+  }
+
+  const detail = await getMovieDetails(
+    searchResult.candidate.id,
+    tmdbToken,
+    locale,
+    shouldUseProxy ? proxyUrl : undefined
+  )
+
+  if (!detail) {
+    return {
+      uri: movie.uri,
+      title: movie.title,
+      year: movie.year,
+      tmdbId: searchResult.candidate.id,
+      genres: [],
+      poster: null,
+      directors: [],
+      _matched: false,
+      matchStatus: searchResult.status,
+      matchScore: searchResult.score,
+      matchVersion: MATCH_VERSION
+    }
+  }
+
+  return {
+    uri: movie.uri,
+    title: detail.title ?? movie.title,
+    year: movie.year,
+    tmdbId: searchResult.candidate.id,
+    genres: detail.genres,
+    poster: detail.poster,
+    directors: detail.directors,
+    _matched: true,
+    matchStatus: searchResult.status,
+    matchScore: searchResult.score,
+    matchVersion: MATCH_VERSION
+  }
+}
+
 function cacheKey(uri: string, locale: string): string {
   return `${uri}:${locale}`
 }
