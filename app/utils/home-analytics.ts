@@ -81,6 +81,7 @@ export interface HomeAnalytics {
     ratingStackedByYears: CountByYearDatum[]
     ratingStackedByWatchedYears: CountByYearDatum[]
     ratingShareByYears: PercentByYearDatum[]
+    ratingShareByWatchedYears: PercentByYearDatum[]
     ratingCategories: ChartCategories
     watchedAllByRating: RatingCountDatum[]
     allMoviesCountByYearWatched: YearWatchedDatum[]
@@ -339,6 +340,7 @@ function buildChartAnalytics(data: EnrichedImportData, directorMap: Map<string, 
     ratingStackedByYears: buildRatingStackedByYears(ratedMovies),
     ratingStackedByWatchedYears: buildRatingStackedByWatchedYears(ratedMovies),
     ratingShareByYears: buildRatingShareByYears(ratedMovies),
+    ratingShareByWatchedYears: buildRatingShareByWatchedYears(ratedMovies),
     ratingCategories: buildRatingCategories(),
     watchedAllByRating: buildWatchedAllByRating(ratedMovies),
     allMoviesCountByYearWatched: buildAllMoviesCountByYearWatched(data.watches),
@@ -488,6 +490,20 @@ function buildRatingStackedByWatchedYears(movies: EnrichedMovie[]) {
 function buildRatingShareByYears(movies: EnrichedMovie[]) {
   const buckets = buildRatingYearBuckets(movies, movie => movie.year)
 
+  return buildRatingShareRows(buckets)
+}
+
+function buildRatingShareByWatchedYears(movies: EnrichedMovie[]) {
+  const buckets = buildRatingYearBuckets(movies, (movie) => {
+    if (!movie.dateRated) return null
+    const watchedYear = Number.parseInt(movie.dateRated.slice(0, 4), 10)
+    return Number.isNaN(watchedYear) ? null : watchedYear
+  })
+
+  return buildRatingShareRows(buckets)
+}
+
+function buildRatingShareRows(buckets: { map: Map<number, Map<number, number>>, sortedYears: number[] }) {
   return buckets.sortedYears.map((year) => {
     const ratingMap = buckets.map.get(year)!
     let total = 0

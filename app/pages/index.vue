@@ -246,7 +246,10 @@ async function onFileSelect(file: File | null | undefined) {
             :items="chartAnalytics.ratingStackedByYears"
             :watched-items="chartAnalytics.ratingStackedByWatchedYears"
           />
-          <ChartsRatingShareByYears :items="chartAnalytics.ratingShareByYears" />
+          <ChartsRatingShareByYears
+            :items="chartAnalytics.ratingShareByYears"
+            :watched-items="chartAnalytics.ratingShareByWatchedYears"
+          />
           <ChartsFavoritesByGenres :items="chartAnalytics.favoritesByGenres" />
           <ChartsGenreShareByYears
             :items="chartAnalytics.genreShareByYears"
