@@ -238,7 +238,10 @@ async function onFileSelect(file: File | null | undefined) {
         />
         <template v-if="chartAnalytics">
           <ChartsWatchedAllByRating :items="chartAnalytics.watchedAllByRating" />
-          <ChartsAllMoviesCountByMonthWatched :items="chartAnalytics.allMoviesCountByYearWatched" />
+          <ChartsAllMoviesCountByMonthWatched
+            :items="chartAnalytics.allMoviesCountByYearWatched"
+            :release-items="chartAnalytics.allMoviesCountByYearReleased"
+          />
           <ChartsRatingStackedByYears :items="chartAnalytics.ratingStackedByYears" />
           <ChartsRatingShareByYears :items="chartAnalytics.ratingShareByYears" />
           <ChartsFavoritesByGenres :items="chartAnalytics.favoritesByGenres" />

@@ -18,10 +18,11 @@ withDefaults(
     }"
   >
     <template #header>
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h3 class="text-2xl font-semibold">
           {{ title }}
         </h3>
+        <slot name="header-right" />
       </div>
     </template>
 

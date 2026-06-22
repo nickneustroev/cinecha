@@ -9,17 +9,38 @@ defineOptions({
 const props = withDefaults(defineProps<{
   data?: WatchedEntry[]
   items?: YearWatchedDatum[]
+  releaseItems?: YearWatchedDatum[]
   showTitle?: boolean
 }>(), {
   data: () => []
 })
+
+type YearMode = 'watched' | 'released'
 
 interface YearEntry {
   label: string
   count: number
 }
 
-const chartData = computed(() => {
+const { t } = useI18n()
+const selectedMode = shallowRef<YearMode>('watched')
+const selectedMinYear = shallowRef<string | null>(null)
+
+const yearModeOptions = computed(() => {
+  const options = [
+    { label: t('charts.count_by_year_watched_option'), value: 'watched' as const }
+  ]
+
+  if (props.releaseItems !== undefined) {
+    options.push({ label: t('charts.count_by_year_released_option'), value: 'released' as const })
+  }
+
+  return options
+})
+
+const chartTitle = computed(() => t('charts.all_movies_count_by_year_watched'))
+
+const watchedChartData = computed(() => {
   if (props.items) return props.items
   if (!props.data.length) return []
 
@@ -41,9 +62,50 @@ const chartData = computed(() => {
   return result
 })
 
+const rawChartData = computed(() => {
+  if (selectedMode.value === 'released') {
+    return props.releaseItems ?? []
+  }
+
+  return watchedChartData.value
+})
+
+const minYearOptions = computed(() => {
+  return rawChartData.value
+    .map(entry => entry.label)
+    .filter((label, index, labels) => labels.indexOf(label) === index)
+    .sort((left, right) => left.localeCompare(right))
+    .map(year => ({
+      label: year,
+      value: year
+    }))
+})
+
+watch(minYearOptions, (options) => {
+  if (!options.length) {
+    selectedMinYear.value = null
+    return
+  }
+
+  const hasSelectedYear = selectedMinYear.value !== null
+    && options.some(option => option.value === selectedMinYear.value)
+
+  if (!hasSelectedYear) {
+    selectedMinYear.value = options[0]!.value
+  }
+}, { immediate: true })
+
+const chartData = computed(() => {
+  if (!selectedMinYear.value) {
+    return rawChartData.value
+  }
+
+  return rawChartData.value.filter(entry => entry.label >= selectedMinYear.value!)
+})
+
 const chartCategories = computed(() => ({
   count: {
-    name: 'Movies Watched',
+    name: t('charts.movies_watched'),
     color: '#22c55e'
   }
 }))
@@ -60,9 +122,37 @@ const chartOptions = {
 
 <template>
   <ChartsChartWrapper
-    :title="$t('charts.all_movies_count_by_year_watched')"
+    :title="chartTitle"
     :show-title="showTitle"
   >
+    <template #header-right>
+      <div class="flex flex-col gap-3 sm:flex-row">
+        <USelect
+          v-if="yearModeOptions.length > 1"
+          :items="yearModeOptions"
+          value-key="value"
+          class="w-full sm:w-48"
+          :model-value="selectedMode"
+          @update:model-value="selectedMode = $event"
+        />
+        <div
+          v-if="minYearOptions.length"
+          class="flex items-center gap-2"
+        >
+          <span class="text-sm text-muted whitespace-nowrap">
+            {{ $t('charts.starting_from') }}
+          </span>
+          <USelect
+            :items="minYearOptions"
+            value-key="value"
+            class="w-full sm:w-24"
+            :model-value="selectedMinYear"
+            @update:model-value="selectedMinYear = $event"
+          />
+        </div>
+      </div>
+    </template>
+
     <BarChart
       :data="chartData"
       :height="300"

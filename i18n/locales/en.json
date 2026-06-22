@@ -76,7 +76,12 @@
     "genre_share_by_year_watched": "Genre Share By Year Watched (from favorite)",
     "rating_stacked_by_year_released": "Rating Stacked By Year Released",
     "rating_share_by_year_released": "Rating Share By Year Released",
-    "all_movies_count_by_year_watched": "All Movies Count By Year Watched",
+    "all_movies_count_by_year_watched": "Movies Watched by Year",
+    "all_movies_count_by_year_released": "All Movies Count By Year Released",
+    "count_by_year_watched_option": "by year watched",
+    "count_by_year_released_option": "by release year",
+    "movies_watched": "Movies Watched",
+    "starting_from": "starting from",
     "top_movies_by_rating": "Top Movies by Rating",
     "last_watched": "Last Watched"
   }

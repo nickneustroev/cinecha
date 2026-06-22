@@ -83,6 +83,7 @@ export interface HomeAnalytics {
     ratingCategories: ChartCategories
     watchedAllByRating: RatingCountDatum[]
     allMoviesCountByYearWatched: YearWatchedDatum[]
+    allMoviesCountByYearReleased: YearWatchedDatum[]
     directorsCount: DirectorCountDatum[]
     directorsPoints: DirectorPointsDatum[]
     directorsAvgRating: DirectorAvgRatingDatum[]
@@ -339,6 +340,7 @@ function buildChartAnalytics(data: EnrichedImportData, directorMap: Map<string, 
     ratingCategories: buildRatingCategories(),
     watchedAllByRating: buildWatchedAllByRating(ratedMovies),
     allMoviesCountByYearWatched: buildAllMoviesCountByYearWatched(data.watches),
+    allMoviesCountByYearReleased: buildAllMoviesCountByYearReleased(data.movies, data.watches),
     directorsCount: buildDirectorsCountChart(directorMap),
     directorsPoints: buildDirectorsPointsChart(directorMap),
     directorsAvgRating: buildDirectorsAvgRatingChart(directorMap),
@@ -532,6 +534,25 @@ function buildAllMoviesCountByYearWatched(watches: Watch[]) {
 
   for (const entry of watched) {
     const key = entry.watchedDate.slice(0, 4)
+    map.set(key, (map.get(key) ?? 0) + 1)
+  }
+
+  return Array.from(map.entries())
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([label, count]) => ({ label, count }))
+}
+
+function buildAllMoviesCountByYearReleased(movies: Movie[], watches: Watch[]) {
+  const movieYears = new Map(movies.map(movie => [movie.id, movie.year] as const))
+  const map = new Map<string, number>()
+
+  for (const watch of watches) {
+    const releaseYear = movieYears.get(watch.movieId)
+    if (!releaseYear) {
+      continue
+    }
+
+    const key = releaseYear.toString()
     map.set(key, (map.get(key) ?? 0) + 1)
   }
 
