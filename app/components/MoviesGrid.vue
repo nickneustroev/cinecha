@@ -20,6 +20,14 @@ const { t } = useI18n()
 const visibleCount = ref(props.limit ?? 8)
 const allLabel = computed(() => t('movies_grid.all'))
 
+function getMovieWatchedDates(movie: EnrichedMovie) {
+  return movie.watchedDates?.length ? movie.watchedDates : (movie.dateRated ? [movie.dateRated] : [])
+}
+
+function movieHasWatchedYear(movie: EnrichedMovie, year: string) {
+  return getMovieWatchedDates(movie).some(date => date.startsWith(year))
+}
+
 const years = computed(() => {
   const set = new Set(props.data.map(m => m.year))
   return [allLabel.value, ...[...set].sort((a, b) => b - a).map(year => String(year))]
@@ -34,7 +42,7 @@ const selectedYear = ref<string>(
 const watchedYears = computed(() => {
   const set = new Set(
     props.data
-      .map(m => m.dateRated?.slice(0, 4))
+      .flatMap(movie => getMovieWatchedDates(movie).map(date => date.slice(0, 4)))
       .filter((y): y is string => !!y)
   )
   const sorted = [...set].sort((a, b) => Number(b) - Number(a))
@@ -93,7 +101,7 @@ const filteredList = computed(() => {
     list = list.filter(m => m.year === Number(selectedYear.value))
   }
   if (selectedWatchedYear.value !== allLabel.value) {
-    list = list.filter(m => m.dateRated?.startsWith(selectedWatchedYear.value))
+    list = list.filter(m => movieHasWatchedYear(m, selectedWatchedYear.value))
   }
   if (selectedWatchedYear.value === earliestWatchedYear.value && selectedWatchedYear.value !== allLabel.value) {
     list = list.filter(m => m.dateRated !== props.importDate)
