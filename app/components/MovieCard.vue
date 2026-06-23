@@ -82,10 +82,17 @@ const formattedWatchedDates = computed(() => watchedDates.value.map(formatDate))
       v-if="formattedWatchedDates.length"
       class="mt-3 flex flex-wrap items-center gap-2"
     >
-      <UIcon
-        name="i-lucide-eye"
-        class="size-4 text-muted shrink-0"
-      />
+      <UBadge
+        size="md"
+        color="secondary"
+        variant="soft"
+        class="px-2"
+      >
+        <UIcon
+          name="i-lucide-eye"
+          class="size-4 shrink-0"
+        />
+      </UBadge>
       <UBadge
         v-for="watchedDate in formattedWatchedDates"
         :key="watchedDate"
