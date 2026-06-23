@@ -48,6 +48,7 @@ export interface ImportData {
 
 export interface Movie extends MovieBase {
   tmdbId: number | null
+  englishTitle: string | null
   genres: string[]
   poster: string | null
   directors: MovieDirector[]
@@ -83,6 +84,7 @@ export interface DiaryEntry {
 export interface EnrichedMovie {
   uri: string
   title: string
+  englishTitle: string | null
   year: number
   dateRated: string | null
   watchedDates?: string[]

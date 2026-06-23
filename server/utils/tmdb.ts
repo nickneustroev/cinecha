@@ -65,6 +65,8 @@ interface TmdbTranslationData {
 }
 
 interface TmdbTranslation {
+  iso_3166_1?: string | null
+  iso_639_1?: string | null
   data?: TmdbTranslationData | null
 }
 
@@ -84,15 +86,19 @@ interface TmdbCrewMember {
 
 interface TmdbMovieDetailsResponse {
   title?: string | null
+  original_title?: string | null
+  original_language?: string | null
   genres?: TmdbGenre[]
   poster_path?: string | null
   credits?: {
     crew?: TmdbCrewMember[]
   }
+  translations?: TmdbTranslationsResponse | null
 }
 
 interface MovieDetails {
   title: string | null
+  englishTitle: string | null
   genres: string[]
   poster: string | null
   directors: {
@@ -173,7 +179,7 @@ interface ParsedImportData {
 
 const IS_DEV = import.meta.dev
 const TMDB_TIMEOUT_MS = 5000
-const MATCH_VERSION = 7
+const MATCH_VERSION = 8
 const proxyAgents = new Map<string, ProxyAgent>()
 const alternativeTitlesCache = new Map<number, string[]>()
 const translatedTitlesCache = new Map<number, string[]>()
@@ -600,6 +606,40 @@ async function getTranslatedTitles(candidate: TmdbSearchCandidate, token: string
   return titles
 }
 
+function getTranslationTitle(translation?: TmdbTranslation | null) {
+  const title = translation?.data?.title?.trim()
+  if (title) {
+    return title
+  }
+
+  const name = translation?.data?.name?.trim()
+  return name || null
+}
+
+function resolveEnglishTitle(data: TmdbMovieDetailsResponse) {
+  const englishTranslations = data.translations?.translations?.filter(translation =>
+    translation.iso_639_1 === 'en' && !!getTranslationTitle(translation)
+  ) ?? []
+
+  const preferredEnglishTranslation = englishTranslations.find(translation => translation.iso_3166_1 === 'US')
+    ?? englishTranslations.find(translation => translation.iso_3166_1 === 'GB')
+    ?? englishTranslations[0]
+
+  const translatedEnglishTitle = getTranslationTitle(preferredEnglishTranslation)
+  if (translatedEnglishTitle) {
+    return translatedEnglishTitle
+  }
+
+  if (data.original_language === 'en') {
+    const originalTitle = data.original_title?.trim()
+    if (originalTitle) {
+      return originalTitle
+    }
+  }
+
+  return null
+}
+
 function getSearchRankBonus(index: number): number {
   if (index === 0) {
     return 15
@@ -789,7 +829,7 @@ async function searchMovie(title: string, year: number, _uri: string, token: str
 
 async function getTitleDetails(candidate: TmdbSearchCandidate, token: string, locale: string, proxyUrl?: string): Promise<MovieDetails | null> {
   const data = await tmdbFetch<TmdbMovieDetailsResponse>(
-    `${TMDB_BASE}/movie/${candidate.id}?append_to_response=credits&language=${locale}`,
+    `${TMDB_BASE}/movie/${candidate.id}?append_to_response=credits,translations&language=${locale}`,
     token,
     proxyUrl
   )
@@ -797,6 +837,7 @@ async function getTitleDetails(candidate: TmdbSearchCandidate, token: string, lo
   const directors = data.credits?.crew?.filter(c => c.job === 'Director') || []
   return {
     title: data.title || null,
+    englishTitle: resolveEnglishTitle(data),
     genres: data.genres?.map(g => g.name) || [],
     poster: data.poster_path || null,
     directors: directors.map(d => ({ name: d.name, photo: d.profile_path || null }))
@@ -849,6 +890,7 @@ export async function debugMatchMovie(
       title: movie.title,
       year: movie.year,
       tmdbId: searchResult.candidate?.id ?? null,
+      englishTitle: null,
       genres: [],
       poster: null,
       directors: [],
@@ -872,6 +914,7 @@ export async function debugMatchMovie(
       title: movie.title,
       year: movie.year,
       tmdbId: searchResult.candidate.id,
+      englishTitle: null,
       genres: [],
       poster: null,
       directors: [],
@@ -887,6 +930,7 @@ export async function debugMatchMovie(
     title: detail.title ?? movie.title,
     year: movie.year,
     tmdbId: searchResult.candidate.id,
+    englishTitle: detail.englishTitle,
     genres: detail.genres,
     poster: detail.poster,
     directors: detail.directors,
@@ -1219,6 +1263,7 @@ export async function processCSVData(
             title: movie.title,
             year: movie.year,
             tmdbId: searchResult.candidate?.id ?? null,
+            englishTitle: null,
             genres: [],
             poster: null,
             directors: [],
@@ -1236,6 +1281,7 @@ export async function processCSVData(
           title: detail.title ?? movie.title,
           year: movie.year,
           tmdbId: searchResult.candidate.id,
+          englishTitle: detail.englishTitle,
           genres: detail.genres,
           poster: detail.poster,
           directors: detail.directors,
@@ -1271,6 +1317,7 @@ export async function processCSVData(
       title: cached?.title ?? movie.title,
       year: movie.year,
       tmdbId: cached?.tmdbId ?? null,
+      englishTitle: cached?.englishTitle ?? null,
       genres: cached?.genres ?? [],
       poster: cached?.poster ?? null,
       directors: cached?.directors ?? [],

@@ -188,6 +188,7 @@ function buildRatedMovies(movies: Movie[], watches: Watch[]) {
       return {
         uri: movie.movieUri ?? `${movie.id}:${getWatchSortDate(watch) || 'unknown'}`,
         title: movie.title,
+        englishTitle: movie.englishTitle,
         year: movie.year,
         dateRated: watch.watchedDate ?? watch.loggedDate,
         watchedDates: watchedDatesByMovie.get(movieId) ?? [],
@@ -219,6 +220,7 @@ function buildMoviesByWatchDate(movies: Movie[], watches: Watch[], importDate?: 
       return {
         uri: movie.movieUri ?? `${movie.id}:${dateRated ?? 'unknown'}`,
         title: movie.title,
+        englishTitle: movie.englishTitle,
         year: movie.year,
         dateRated,
         watchedDates: watchedDatesByMovie.get(watch.movieId) ?? [],

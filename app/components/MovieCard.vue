@@ -26,6 +26,9 @@ const watchedDates = computed(() => {
 })
 
 const formattedWatchedDates = computed(() => watchedDates.value.map(formatDate))
+const shouldShowEnglishTitle = computed(() =>
+  !!props.movie.englishTitle && !locale.value.toLowerCase().startsWith('en')
+)
 </script>
 
 <template>
@@ -103,5 +106,11 @@ const formattedWatchedDates = computed(() => watchedDates.value.map(formatDate))
         {{ watchedDate }}
       </UBadge>
     </div>
+    <p
+      v-if="shouldShowEnglishTitle"
+      class="mt-3 text-muted italic"
+    >
+      {{ movie.englishTitle }}
+    </p>
   </SimpleCard>
 </template>
