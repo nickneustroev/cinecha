@@ -262,12 +262,10 @@ async function startImport() {
 
     <template v-if="data">
       <div class="flex flex-col gap-y-8">
-        <h3 class="text-2xl font-semibold">
-          {{ $t('home.top_movies') }}
-        </h3>
         <MoviesGrid
           :data="analytics?.moviesByRating || []"
           :import-date="data.stats.importDate"
+          :title="$t('home.top_movies')"
           pre-sorted
           link="/movies?tab=ratings"
         />

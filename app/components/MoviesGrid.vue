@@ -143,7 +143,7 @@ watch([selectedYear, selectedWatchedYear, selectedGenre], () => {
   <div>
     <h3
       v-if="title"
-      class="text-2xl font-semibold mb-4"
+      class="text-2xl font-semibold mb-6"
     >
       {{ title }}
     </h3>
