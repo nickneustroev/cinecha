@@ -62,9 +62,19 @@ function resetUpload() {
   }
 }
 
+function resetEstimate() {
+  estimate.value = null
+  remainingSeconds.value = 0
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+    countdownTimer = null
+  }
+}
+
 async function runDemo() {
   showUpload.value = false
   uploadedFile.value = null
+  resetEstimate()
   await process(DEFAULT_MIN_RATING, false)
   if (status.value === 'done') {
     showSuccess()
@@ -76,22 +86,34 @@ async function runDemo() {
 
 async function onFileSelect(file: File | null | undefined) {
   uploadError.value = null
-  if (!file) return
+  resetEstimate()
+
+  if (!file) {
+    uploadedFile.value = null
+    return
+  }
 
   if (!file.name.toLowerCase().endsWith('.zip')) {
+    uploadedFile.value = null
     uploadError.value = 'home.upload_error_format'
     return
   }
   if (file.size > 2 * 1024 * 1024) {
+    uploadedFile.value = null
     uploadError.value = 'home.upload_error_size'
     return
   }
 
   uploadedFile.value = file
-  const est = await estimateProcessingTime(file, DEFAULT_MIN_RATING)
-  estimate.value = est
-  if (est) startCountdown(est.seconds)
-  await processFromFile(file, DEFAULT_MIN_RATING)
+  estimate.value = await estimateProcessingTime(file, DEFAULT_MIN_RATING)
+}
+
+async function startImport() {
+  if (!uploadedFile.value) return
+
+  if (estimate.value) startCountdown(estimate.value.seconds)
+
+  await processFromFile(uploadedFile.value, DEFAULT_MIN_RATING)
   if (status.value === 'done') {
     showUpload.value = false
     showSuccess()
@@ -133,6 +155,15 @@ async function onFileSelect(file: File | null | undefined) {
         :ui="{ base: 'min-h-36' }"
         @update:model-value="onFileSelect"
       />
+
+      <UButton
+        v-if="(showUpload || status === 'idle') && status !== 'loading' && uploadedFile && !uploadError"
+        size="lg"
+        color="primary"
+        @click="startImport"
+      >
+        {{ $t('home.start_import') }}
+      </UButton>
 
       <p
         v-if="uploadError"

@@ -17,6 +17,7 @@
     "upload_error_size": "Файл должен быть меньше 2MB",
     "upload_error_format": "Только .zip файлы",
     "upload_again": "Загрузить данные снова",
+    "start_import": "Начать импорт",
     "upload_or_demo": "Или, если у вас нет своих данных, вы можете:",
     "import_success": "Импорт данных успешно завершён.",
     "import_error": "Ошибка импорта данных."
