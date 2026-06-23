@@ -58,6 +58,7 @@ watch(activeTab, (tab) => {
           v-if="activeTab === 'points'"
           :cards-data="analytics?.directorsByPoints"
           :title="$t('pages.directors.title.points')"
+          :subtitle="$t('directors_grid.points_explanation')"
           :limit="100"
           :show-more="100"
         />

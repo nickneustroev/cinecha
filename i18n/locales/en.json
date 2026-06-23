@@ -64,6 +64,8 @@
     "show_more": "Show {count} more",
     "view_all": "View all",
     "points_label": "Points",
+    "points_explanation": "A director's rating is calculated from movies rated 3.0 and above: each rating is raised to the fourth power, then the values are summed, the total is rounded, and divided by 10. Formula: (x₁⁴ + x₂⁴ + x₃⁴ + ...)/10. Raising ratings to the fourth power makes highly rated films influence the result much more strongly.",
+    "points_explanation_tooltip_label": "Show explanation for the directors rating",
     "highest_label": "Highest rating",
     "title": {
       "points": "Top Directors by Points",

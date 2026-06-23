@@ -284,6 +284,7 @@ async function startImport() {
         <DirectorsGrid
           :cards-data="analytics?.directorsByPoints"
           :title="$t('pages.directors.title.points')"
+          :subtitle="$t('directors_grid.points_explanation')"
           :limit="8"
           link="/directors?tab=points"
         />

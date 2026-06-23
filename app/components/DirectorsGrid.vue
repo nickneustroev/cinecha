@@ -11,6 +11,7 @@ const { t } = useI18n()
 const props = withDefaults(defineProps<{
   data?: EnrichedMovie[]
   title?: string
+  subtitle?: string
   limit?: number
   link?: string
   sortBy?: 'points' | 'highestMovieRating'
@@ -109,9 +110,32 @@ function computeByHighest(): DirectorGridCard[] {
 
 <template>
   <div class="mx-auto">
-    <h3 class="mb-6 text-2xl font-semibold">
-      {{ title ?? (sortBy === 'points' ? t('directors_grid.title.points') : t('directors_grid.title.highest')) }}
-    </h3>
+    <div class="mb-6 flex items-center gap-2">
+      <h3 class="text-2xl font-semibold">
+        {{ title ?? (sortBy === 'points' ? t('directors_grid.title.points') : t('directors_grid.title.highest')) }}
+      </h3>
+      <UPopover
+        v-if="subtitle"
+        arrow
+        :content="{ side: 'right', align: 'center', sideOffset: 8 }"
+        :ui="{ content: 'max-w-md whitespace-normal p-4' }"
+      >
+        <UButton
+          icon="i-lucide-circle-help"
+          color="neutral"
+          variant="ghost"
+          size="xs"
+          class="rounded-full"
+          :aria-label="t('directors_grid.points_explanation_tooltip_label')"
+        />
+
+        <template #content>
+          <p class="max-w-md text-sm leading-6">
+            {{ subtitle }}
+          </p>
+        </template>
+      </UPopover>
+    </div>
     <UPageGrid :ui="{ base: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4' }">
       <DirectorCard
         v-for="card in cards"
