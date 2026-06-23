@@ -29,6 +29,12 @@ const formattedWatchedDates = computed(() => watchedDates.value.map(formatDate))
 const shouldShowEnglishTitle = computed(() =>
   !!props.movie.englishTitle && !locale.value.toLowerCase().startsWith('en')
 )
+const letterboxdUri = computed(() =>
+  props.movie.uri.startsWith('http') ? props.movie.uri : null
+)
+const tmdbUri = computed(() =>
+  props.movie.tmdbId ? `https://www.themoviedb.org/movie/${props.movie.tmdbId}` : null
+)
 </script>
 
 <template>
@@ -107,10 +113,47 @@ const shouldShowEnglishTitle = computed(() =>
       </UBadge>
     </div>
     <p
-      v-if="shouldShowEnglishTitle"
-      class="mt-3 text-muted italic"
+      v-if="shouldShowEnglishTitle || letterboxdUri || tmdbUri"
+      class="mt-3 text-muted leading-relaxed"
     >
-      {{ movie.englishTitle }}
+      <span class="inline-flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span
+          v-if="shouldShowEnglishTitle"
+          class="italic"
+        >
+          {{ movie.englishTitle }}
+        </span>
+        <a
+          v-if="letterboxdUri"
+          :href="letterboxdUri"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open on Letterboxd"
+          class="group inline-flex items-center rounded-sm transition-colors hover:text-primary"
+        >
+          <img
+            src="/letterboxd-favicon.ico"
+            alt=""
+            aria-hidden="true"
+            class="size-4 opacity-80 transition duration-150 hover:opacity-100"
+          >
+        </a>
+        <a
+          v-if="tmdbUri"
+          :href="tmdbUri"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open on TMDB"
+          class="group inline-flex items-center rounded-sm transition-colors hover:text-primary"
+        >
+          <img
+            src="/tmdb-favicon.ico"
+            alt=""
+            aria-hidden="true"
+            class="size-4 opacity-60 transition duration-150 hover:opacity-100"
+          >
+        </a>
+      </span>
     </p>
   </SimpleCard>
 </template>
