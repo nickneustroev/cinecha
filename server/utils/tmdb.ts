@@ -131,6 +131,22 @@ interface CachePaths {
   snapshotPath: string
 }
 
+function resolveEnrichmentMinRating(explicitMinRating?: number | null): number | null {
+  if (typeof explicitMinRating === 'number' && Number.isFinite(explicitMinRating)) {
+    return explicitMinRating
+  }
+
+  const { tmdbMinRating } = useRuntimeConfig()
+  const rawValue = typeof tmdbMinRating === 'string' ? tmdbMinRating.trim() : String(tmdbMinRating ?? '').trim()
+
+  if (!rawValue) {
+    return null
+  }
+
+  const parsedValue = Number(rawValue)
+  return Number.isFinite(parsedValue) ? parsedValue : null
+}
+
 interface ParsedRatingEntry {
   date: string
   title: string
@@ -1087,10 +1103,11 @@ export async function processCSVData(
   csvFiles: { diary: string, ratings: string, watched: string },
   cachePaths: CachePaths,
   locale = 'en-US',
-  minRating = 3,
+  minRating: number | null | undefined = undefined,
   tmdbRequired = true
 ): Promise<EnrichedImportData> {
   const { tmdbToken, tmdbProxy } = useRuntimeConfig()
+  const resolvedMinRating = resolveEnrichmentMinRating(minRating)
   console.log('[process] подготовка данных началась')
 
   const proxyUrl = tmdbProxy.trim() || undefined
@@ -1134,13 +1151,17 @@ export async function processCSVData(
 
   console.log(`[process] csv прочитаны в json: diary ${raw.diary.length}, ratings ${raw.ratings.length}`)
 
-  console.log(`[process] требуется обогащение данных: для ratings с оценкой ≥ ${minRating}`)
+  console.log(
+    resolvedMinRating === null
+      ? '[process] требуется обогащение данных: для всех ratings'
+      : `[process] требуется обогащение данных: для ratings с оценкой ≥ ${resolvedMinRating}`
+  )
 
   const cache = loadOrCreateCache(cachePaths)
 
   const enrichableMovieIds = new Set(
     raw.ratings
-      .filter(entry => entry.rating >= minRating)
+      .filter(entry => resolvedMinRating === null || entry.rating >= resolvedMinRating)
       .map(entry => getMovieIdForRawEntry(entry))
   )
   const toEnrich = baseData.movies.filter(movie => enrichableMovieIds.has(movie.id) && movie.movieUri)

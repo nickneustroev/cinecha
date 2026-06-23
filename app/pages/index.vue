@@ -11,7 +11,6 @@ const showUpload = ref(false)
 const estimate = ref<{ count: number, seconds: number } | null>(null)
 const remainingSeconds = ref(0)
 const initialLoading = ref(true)
-const DEFAULT_MIN_RATING = 3
 let countdownTimer: ReturnType<typeof setInterval> | null = null
 
 const estimateSummary = computed(() => {
@@ -98,7 +97,7 @@ async function runDemo() {
   showUpload.value = false
   uploadedFile.value = null
   resetEstimate()
-  await process(DEFAULT_MIN_RATING, false)
+  await process(undefined, false)
   if (status.value === 'done') {
     showSuccess()
   } else {
@@ -136,7 +135,7 @@ async function startImport() {
 
   if (estimate.value) startCountdown(estimate.value.seconds)
 
-  await processFromFile(uploadedFile.value, DEFAULT_MIN_RATING)
+  await processFromFile(uploadedFile.value)
   if (status.value === 'done') {
     showUpload.value = false
     showSuccess()

@@ -11,8 +11,10 @@ const CACHE_PATHS = {
 
 export default defineEventHandler(async (event): Promise<EnrichedImportData> => {
   const locale = getCookie(event, 'i18n_lang') || 'en-US'
-  const body = await readBody<{ minRating?: number, tmdbRequired?: boolean }>(event)
-  const minRating = body?.minRating || 3
+  const body = await readBody<{ minRating?: number | null, tmdbRequired?: boolean }>(event)
+  const minRating = typeof body?.minRating === 'number' && Number.isFinite(body.minRating)
+    ? body.minRating
+    : undefined
   const tmdbRequired = body?.tmdbRequired ?? true
   const zipData = readFileSync(DEMO_ZIP_PATH)
   const zip = new AdmZip(Buffer.from(zipData))

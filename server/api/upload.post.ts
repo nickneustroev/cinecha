@@ -18,7 +18,8 @@ export default defineEventHandler(async (event): Promise<EnrichedImportData> => 
   }
 
   const minRatingField = formData.find(f => f.name === 'minRating')
-  const minRating = minRatingField ? parseInt(minRatingField.data.toString('utf-8'), 10) || 3 : 3
+  const parsedMinRating = minRatingField ? Number(minRatingField.data.toString('utf-8').trim()) : Number.NaN
+  const minRating = Number.isFinite(parsedMinRating) ? parsedMinRating : undefined
 
   const fileField = formData.find(f => f.name === 'file')
   if (!fileField || !fileField.filename) {

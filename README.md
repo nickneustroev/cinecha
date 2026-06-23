@@ -57,6 +57,7 @@ pnpm preview
 ```env
 NUXT_TMDB_TOKEN=<tmdb-api-read-access-token>
 NUXT_TMDB_PROXY=http://user:password@host:port
+NUXT_TMDB_MIN_RATING=3
 ```
 
 `NUXT_TMDB_TOKEN`
@@ -69,6 +70,12 @@ NUXT_TMDB_PROXY=http://user:password@host:port
 
 - необязательный HTTP(S)-proxy для запросов к TMDB
 - при наличии токена приложение сначала проверяет proxy, а затем использует его только если тестовый запрос успешен
+
+`NUXT_TMDB_MIN_RATING`
+
+- необязательный минимальный рейтинг для TMDB-обогащения
+- если задан, сервер обогащает только фильмы с рейтингом не ниже этого значения
+- если переменная отсутствует или пуста, ограничение не применяется и обрабатываются все фильмы
 
 ## Скрипты
 

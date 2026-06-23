@@ -34,14 +34,14 @@ export function useImportData() {
     return false
   }
 
-  async function process(minRating = 3, tmdbRequired = true) {
+  async function process(minRating: number | undefined = undefined, tmdbRequired = true) {
     status.value = 'loading'
     error.value = null
 
     try {
       const result = await $fetch<EnrichedImportData>('/api/process', {
         method: 'POST',
-        body: { minRating, tmdbRequired }
+        body: minRating === undefined ? { tmdbRequired } : { minRating, tmdbRequired }
       })
       data.value = result
       status.value = 'done'
@@ -57,14 +57,16 @@ export function useImportData() {
     }
   }
 
-  async function processFromFile(file: File, minRating = 3) {
+  async function processFromFile(file: File, minRating?: number) {
     status.value = 'loading'
     error.value = null
 
     try {
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('minRating', String(minRating))
+      if (minRating !== undefined) {
+        formData.append('minRating', String(minRating))
+      }
       const result = await $fetch<EnrichedImportData>('/api/upload', {
         method: 'POST',
         body: formData
