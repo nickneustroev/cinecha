@@ -33,6 +33,7 @@ const sortedList = computed(() => {
 const cards = computed(() => sortedList.value.slice(0, visibleCount.value))
 
 const hasMore = computed(() => visibleCount.value < sortedList.value.length)
+const directorEligibleMovies = computed(() => props.data.filter(movie => movie.userRating >= 3))
 
 function showMoreCards() {
   visibleCount.value += props.showMore!
@@ -45,7 +46,7 @@ watch(() => props.sortBy, () => {
 function computeByPoints(): DirectorGridCard[] {
   const map = new Map<string, { photo: string | null, points: number, breakdownParts: string[], movies: { title: string, year: number, userRating: number }[] }>()
 
-  for (const movie of props.data) {
+  for (const movie of directorEligibleMovies.value) {
     for (const d of movie.directors) {
       const entry = map.get(d.name) ?? { photo: d.photo, points: 0, breakdownParts: [] as string[], movies: [] }
       if (!entry.photo) entry.photo = d.photo
@@ -75,7 +76,7 @@ function computeByPoints(): DirectorGridCard[] {
 function computeByHighest(): DirectorGridCard[] {
   const map = new Map<string, { photo: string | null, maxRating: number, topCount: number, topMaxYear: number, movies: { title: string, year: number, userRating: number }[] }>()
 
-  for (const movie of props.data) {
+  for (const movie of directorEligibleMovies.value) {
     for (const d of movie.directors) {
       const entry = map.get(d.name) ?? { photo: d.photo, maxRating: 0, topCount: 0, topMaxYear: 0, movies: [] }
       if (!entry.photo) entry.photo = d.photo

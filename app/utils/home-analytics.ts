@@ -7,6 +7,7 @@ const GENRE_COLORS = [
   '#0891b2', '#c026d3', '#0284c7', '#059669', '#d97706',
   '#7c3aed', '#4d7c0f', '#0f766e', '#e11d48', '#0369a1'
 ]
+const MIN_DIRECTOR_MOVIE_RATING = 3
 
 export interface DirectorMovieSummary {
   title: string
@@ -106,9 +107,10 @@ export function buildHomeAnalytics(data: EnrichedImportData, options: HomeAnalyt
     directorHighestLabel = 'Highest rated movie'
   } = options
   const ratedMovies = buildRatedMovies(data.movies, data.watches)
+  const directorRatedMovies = filterDirectorRatedMovies(ratedMovies)
   const moviesByRating = sortMoviesByRating(ratedMovies)
   const moviesByDateRated = buildMoviesByWatchDate(data.movies, data.watches, data.stats.importDate)
-  const directorMap = buildDirectorAggregateMap(ratedMovies)
+  const directorMap = buildDirectorAggregateMap(directorRatedMovies)
 
   return {
     moviesByRating,
@@ -121,6 +123,10 @@ export function buildHomeAnalytics(data: EnrichedImportData, options: HomeAnalyt
 
 export function formatDirectorPoints(points: number) {
   return (Math.round(points) / 10).toFixed(1)
+}
+
+function filterDirectorRatedMovies(movies: EnrichedMovie[]) {
+  return movies.filter(movie => movie.userRating >= MIN_DIRECTOR_MOVIE_RATING)
 }
 
 function getWatchSortDate(watch: Watch) {
