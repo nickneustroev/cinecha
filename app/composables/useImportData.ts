@@ -2,6 +2,8 @@ import type { EnrichedImportData } from '~/types/import'
 import { get, set, del } from 'idb-keyval'
 
 const STORAGE_KEY = 'letterboxd-import'
+const STORAGE_VERSION_KEY = 'letterboxd-import-version'
+const STORAGE_VERSION = 2
 
 interface FetchErrorLike {
   data?: {
@@ -15,6 +17,10 @@ function getErrorMessage(error: unknown, fallback: string) {
   return fetchError.data?.message || fetchError.message || fallback
 }
 
+function isCurrentCacheShape(cached: EnrichedImportData) {
+  return cached.movies.every(movie => 'englishTitle' in movie)
+}
+
 export function useImportData() {
   const status = ref<'idle' | 'loading' | 'done' | 'error'>('idle')
   const data = shallowRef<EnrichedImportData | null>(null)
@@ -22,12 +28,17 @@ export function useImportData() {
 
   async function load(): Promise<boolean> {
     try {
+      const version = await get<number>(STORAGE_VERSION_KEY)
       const cached = await get<EnrichedImportData>(STORAGE_KEY)
-      if (cached) {
+
+      if (cached && version === STORAGE_VERSION && isCurrentCacheShape(cached)) {
         data.value = cached
         status.value = 'done'
         return true
       }
+
+      await del(STORAGE_KEY)
+      await set(STORAGE_VERSION_KEY, STORAGE_VERSION)
     } catch (cacheError) {
       void cacheError
     }
@@ -48,6 +59,7 @@ export function useImportData() {
 
       try {
         await set(STORAGE_KEY, result)
+        await set(STORAGE_VERSION_KEY, STORAGE_VERSION)
       } catch (cacheError) {
         void cacheError
       }
@@ -76,6 +88,7 @@ export function useImportData() {
 
       try {
         await set(STORAGE_KEY, result)
+        await set(STORAGE_VERSION_KEY, STORAGE_VERSION)
       } catch (cacheError) {
         void cacheError
       }
@@ -91,6 +104,7 @@ export function useImportData() {
     error.value = null
     try {
       await del(STORAGE_KEY)
+      await del(STORAGE_VERSION_KEY)
     } catch (cacheError) {
       void cacheError
     }
