@@ -145,6 +145,22 @@ async function startImport() {
       class="flex flex-col items-center gap-6 py-8"
       :class="!data && status === 'idle' ? 'flex-1 justify-center' : ''"
     >
+      <p
+        v-if="(showUpload || status === 'idle') && status !== 'loading'"
+        class="max-w-md text-center text-sm text-muted"
+      >
+        {{ $t('home.letterboxd_export_hint_before') }}
+        <a
+          href="https://letterboxd.com/settings/data/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-primary underline underline-offset-2"
+        >
+          {{ $t('home.letterboxd_settings_link') }}
+        </a>
+        {{ $t('home.letterboxd_export_hint_after') }}
+      </p>
+
       <UFileUpload
         v-if="(showUpload || status === 'idle') && status !== 'loading'"
         accept=".zip"
