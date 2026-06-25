@@ -166,6 +166,11 @@ function resolveEnrichmentMinRating(explicitMinRating?: number | null): number |
   return Number.isFinite(parsedValue) ? parsedValue : null
 }
 
+function isTruthyEnvFlag(value: unknown): boolean {
+  const normalized = typeof value === 'string' ? value.trim().toLowerCase() : String(value ?? '').trim().toLowerCase()
+  return ['1', 'true', 'yes', 'on'].includes(normalized)
+}
+
 interface ParsedRatingEntry {
   date: string
   title: string
@@ -1163,8 +1168,9 @@ export async function processCSVData(
   minRating: number | null | undefined = undefined,
   tmdbRequired = true
 ): Promise<EnrichedImportData> {
-  const { tmdbToken, tmdbProxy } = useRuntimeConfig()
+  const { tmdbToken, tmdbProxy, tmdbDisableCacheRead } = useRuntimeConfig()
   const resolvedMinRating = resolveEnrichmentMinRating(minRating)
+  const shouldReadCache = !isTruthyEnvFlag(tmdbDisableCacheRead)
   logProcess('подготовка данных началась')
 
   const proxyUrl = tmdbProxy.trim() || undefined
@@ -1214,7 +1220,11 @@ export async function processCSVData(
       : `требуется обогащение данных: для ratings с оценкой ≥ ${resolvedMinRating}`
   )
 
-  const cache = loadOrCreateCache(cachePaths)
+  const cache = shouldReadCache ? loadOrCreateCache(cachePaths) : {}
+
+  if (!shouldReadCache) {
+    logProcess('чтение TMDB-кэша отключено env-переменной')
+  }
 
   const enrichableMovieIds = new Set(
     raw.ratings

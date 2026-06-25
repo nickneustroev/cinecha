@@ -31,7 +31,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     tmdbToken: '',
     tmdbProxy: '',
-    tmdbMinRating: ''
+    tmdbMinRating: '',
+    tmdbDisableCacheRead: ''
   },
 
   compatibilityDate: '2025-01-15',

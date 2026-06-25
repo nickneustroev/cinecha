@@ -46,6 +46,7 @@ pnpm preview
 NUXT_TMDB_TOKEN=<tmdb-api-read-access-token>
 NUXT_TMDB_PROXY=http://user:password@host:port
 NUXT_TMDB_MIN_RATING=3
+NUXT_TMDB_DISABLE_CACHE_READ=true
 ```
 
 `NUXT_TMDB_TOKEN`
@@ -64,6 +65,12 @@ NUXT_TMDB_MIN_RATING=3
 - необязательный глобальный порог оценки для TMDB-обогащения
 - если переменная не задана, обогащение применяется ко всем фильмам из `ratings.csv`
 - если задана, TMDB-запросы идут только для фильмов с рейтингом не ниже порога
+
+`NUXT_TMDB_DISABLE_CACHE_READ`
+
+- необязательный флаг для отключения чтения TMDB-кэша при обогащении
+- при `true`/`1` импорт игнорирует `data/tmdb-cache.runtime.json` и `public/tmdb-cache.json`
+- запись runtime-кэша в dev при этом сохраняется
 
 ## Скрипты
 
