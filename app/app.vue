@@ -3,6 +3,7 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 
 const { t, locale, setLocale } = useI18n()
 const route = useRoute()
+const isMobile = useIsMobile()
 
 useHead({
   meta: [
@@ -41,6 +42,7 @@ const localeItems = [
   { label: 'English', shortLabel: 'EN', value: 'en' },
   { label: 'Русский', shortLabel: 'RU', value: 'ru' }
 ]
+const localeSelectClass = computed(() => isMobile.value ? 'w-16' : 'w-32')
 
 useSeoMeta({
   title,
@@ -52,6 +54,16 @@ useSeoMeta({
 
 function switchLocale(code: string) {
   setLocale(code as 'en' | 'ru')
+}
+
+function getLocaleLabel(value: string | undefined) {
+  const item = localeItems.find(item => item.value === value)
+
+  if (!item) {
+    return ''
+  }
+
+  return isMobile.value ? item.shortLabel : item.label
 }
 </script>
 
@@ -76,33 +88,17 @@ function switchLocale(code: string) {
         <USelect
           :items="localeItems"
           value-key="value"
-          size="sm"
-          class="w-16 sm:hidden"
+          :size="isMobile ? 'sm' : 'md'"
+          :class="localeSelectClass"
           :model-value="locale"
           @update:model-value="switchLocale"
         >
           <template #default="{ modelValue }">
-            {{ localeItems.find(item => item.value === modelValue)?.shortLabel }}
+            {{ getLocaleLabel(modelValue) }}
           </template>
 
           <template #item-label="{ item }">
-            {{ item.shortLabel }}
-          </template>
-        </USelect>
-
-        <USelect
-          :items="localeItems"
-          value-key="value"
-          class="hidden w-32 sm:inline-flex"
-          :model-value="locale"
-          @update:model-value="switchLocale"
-        >
-          <template #default="{ modelValue }">
-            {{ localeItems.find(item => item.value === modelValue)?.label }}
-          </template>
-
-          <template #item-label="{ item }">
-            {{ item.label }}
+            {{ isMobile ? item.shortLabel : item.label }}
           </template>
         </USelect>
 

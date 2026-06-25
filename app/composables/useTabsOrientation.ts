@@ -1,8 +1,5 @@
-import { breakpointsTailwind, useBreakpoints } from '@vueuse/core'
-
 export function useTabsOrientation() {
-  const breakpoints = useBreakpoints(breakpointsTailwind)
-  const isMobile = breakpoints.smaller('sm')
+  const isMobile = useIsMobile()
 
   return computed(() => isMobile.value ? 'vertical' : 'horizontal')
 }
