@@ -120,7 +120,7 @@ function getLocaleLabel(value: string | undefined) {
           :items="navigationItems"
           orientation="vertical"
           class="-mx-2.5"
-          :ui="{ linkLabel: 'text-base' }"
+          :ui="{ link: 'justify-center', linkLabel: 'text-base text-center' }"
         />
 
         <USeparator class="my-6" />
