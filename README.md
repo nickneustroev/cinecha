@@ -47,7 +47,15 @@ NUXT_TMDB_TOKEN=<tmdb-api-read-access-token>
 NUXT_TMDB_PROXY=http://user:password@host:port
 NUXT_TMDB_MIN_RATING=3
 NUXT_TMDB_DISABLE_CACHE_READ=true
+NUXT_IMPORT_MAX_MOVIES=1000
 ```
+
+`NUXT_IMPORT_MAX_MOVIES`
+
+- необязательный лимит на число фильмов в пользовательском `.zip`-архиве
+- если переменная не задана, ограничения нет
+- если уникальных фильмов в архиве больше лимита, `POST /api/upload` вернет `400` с ошибкой про максимальное число фильмов
+
 
 `NUXT_TMDB_TOKEN`
 
@@ -107,6 +115,7 @@ pnpm typecheck
 
 - только `.zip`
 - размер до `2 MB`
+- при `NUXT_IMPORT_MAX_MOVIES` число уникальных фильмов в архиве не должно превышать заданный лимит
 - внутри архива обязательны `diary.csv` и `ratings.csv`
 
 ### `POST /api/process`

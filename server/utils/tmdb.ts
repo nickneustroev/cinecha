@@ -171,6 +171,18 @@ function isTruthyEnvFlag(value: unknown): boolean {
   return ['1', 'true', 'yes', 'on'].includes(normalized)
 }
 
+export function resolveImportMaxMoviesLimit(): number | null {
+  const { importMaxMovies } = useRuntimeConfig()
+  const rawValue = typeof importMaxMovies === 'string' ? importMaxMovies.trim() : String(importMaxMovies ?? '').trim()
+
+  if (!rawValue) {
+    return null
+  }
+
+  const parsedValue = Number(rawValue)
+  return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : null
+}
+
 interface ParsedRatingEntry {
   date: string
   title: string
@@ -1133,21 +1145,27 @@ function buildNormalizedImportData(raw: ParsedImportData): ImportData {
     ...raw.diary.map(entry => entry.date)
   ].filter(Boolean).sort()
   const importDate = allDates.length > 0 ? allDates[0]! : null
+  const uniqueMovies = Array.from(new Set(moviesById.values()))
 
   return {
-    movies: Array.from(new Set(moviesById.values())),
+    movies: uniqueMovies,
     watches,
     stats: {
       totalRatings: raw.ratings.length,
       totalWatched: raw.diary.filter(entry => !!entry.watchedDate).length,
       totalDiary: raw.diary.length,
-      totalMovies: moviesById.size,
+      totalMovies: uniqueMovies.length,
       totalWatches: watches.length,
       uniqueTitles: allTitles.size,
       avgRating,
       importDate
     }
   }
+}
+
+export function getImportMovieCount(csvFiles: { diary: string, ratings: string, watched: string }) {
+  const raw = parseRawImportData(csvFiles)
+  return buildNormalizedImportData(raw).stats.totalMovies
 }
 
 function buildEnrichedImportData(
