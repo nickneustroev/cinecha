@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import type { NavigationMenuItem } from '@nuxt/ui'
+
 const { t, locale, setLocale } = useI18n()
+const route = useRoute()
 
 useHead({
   meta: [
@@ -15,6 +18,29 @@ useHead({
 
 const title = computed(() => `${t('nav.home')} - Cinesta`)
 const description = 'Cinesta помогает загружать экспорт Letterboxd, обогащать фильмы данными из TMDB и смотреть аналитику по фильмам, режиссерам и оценкам.'
+
+const navigationItems = computed<NavigationMenuItem[]>(() => [
+  {
+    label: t('nav.home'),
+    to: '/',
+    active: route.path === '/'
+  },
+  {
+    label: t('nav.movies'),
+    to: '/movies',
+    active: route.path.startsWith('/movies')
+  },
+  {
+    label: t('nav.directors'),
+    to: '/directors',
+    active: route.path.startsWith('/directors')
+  }
+])
+
+const localeItems = [
+  { label: 'English', value: 'en' },
+  { label: 'Русский', value: 'ru' }
+]
 
 useSeoMeta({
   title,
@@ -33,33 +59,24 @@ function switchLocale(code: string) {
   <UApp :toaster="{ position: 'top-right' }">
     <UHeader>
       <template #left>
-        <div class="flex items-center gap-6">
-          <NuxtLink
-            to="/"
-            class="text-2xl font-bold shrink-0"
-          >
-            Cinesta
-          </NuxtLink>
-
-          <UNavigationMenu
-            :ui="{ linkLabel: 'text-base' }"
-            :items="[
-              { label: $t('nav.home'), to: '/' },
-              { label: $t('nav.movies'), to: '/movies' },
-              { label: $t('nav.directors'), to: '/directors' }
-            ]"
-          />
-        </div>
+        <NuxtLink
+          to="/"
+          class="text-2xl font-bold shrink-0"
+        >
+          Cinesta
+        </NuxtLink>
       </template>
+
+      <UNavigationMenu
+        :ui="{ linkLabel: 'text-base' }"
+        :items="navigationItems"
+      />
 
       <template #right>
         <USelect
-          :items="[
-            { label: 'English', value: 'en' },
-            { label: 'Русский', value: 'ru' }
-          ]"
+          :items="localeItems"
           value-key="value"
-          class="w-32"
+          class="hidden w-32 sm:block"
           :model-value="locale"
           @update:model-value="switchLocale"
         />
@@ -73,7 +90,39 @@ function switchLocale(code: string) {
           aria-label="GitHub"
           color="neutral"
           variant="ghost"
+          class="hidden sm:inline-flex"
         />
+      </template>
+
+      <template #body>
+        <UNavigationMenu
+          :items="navigationItems"
+          orientation="vertical"
+          class="-mx-2.5"
+          :ui="{ linkLabel: 'text-base' }"
+        />
+
+        <USeparator class="my-6" />
+
+        <div class="flex flex-col gap-3">
+          <USelect
+            :items="localeItems"
+            value-key="value"
+            class="w-full"
+            :model-value="locale"
+            @update:model-value="switchLocale"
+          />
+
+          <UButton
+            to="https://github.com/nickneustroev/cinesta"
+            target="_blank"
+            icon="i-simple-icons-github"
+            label="GitHub"
+            color="neutral"
+            variant="subtle"
+            block
+          />
+        </div>
       </template>
     </UHeader>
 
