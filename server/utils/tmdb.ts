@@ -137,6 +137,19 @@ interface CachePaths {
   snapshotPath: string
 }
 
+function logProcess(message: string) {
+  const timestamp = new Intl.DateTimeFormat('sv-SE', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }).format(new Date()).replace(',', '')
+  console.log(`[${timestamp}] [process] ${message}`)
+}
+
 function resolveEnrichmentMinRating(explicitMinRating?: number | null): number | null {
   if (typeof explicitMinRating === 'number' && Number.isFinite(explicitMinRating)) {
     return explicitMinRating
@@ -1152,7 +1165,7 @@ export async function processCSVData(
 ): Promise<EnrichedImportData> {
   const { tmdbToken, tmdbProxy } = useRuntimeConfig()
   const resolvedMinRating = resolveEnrichmentMinRating(minRating)
-  console.log('[process] подготовка данных началась')
+  logProcess('подготовка данных началась')
 
   const proxyUrl = tmdbProxy.trim() || undefined
   let shouldUseProxy = false
@@ -1193,12 +1206,12 @@ export async function processCSVData(
   const raw = parseRawImportData(csvFiles)
   const baseData = buildNormalizedImportData(raw)
 
-  console.log(`[process] csv прочитаны в json: diary ${raw.diary.length}, ratings ${raw.ratings.length}`)
+  logProcess(`csv прочитаны в json: diary ${raw.diary.length}, ratings ${raw.ratings.length}`)
 
-  console.log(
+  logProcess(
     resolvedMinRating === null
-      ? '[process] требуется обогащение данных: для всех ratings'
-      : `[process] требуется обогащение данных: для ratings с оценкой ≥ ${resolvedMinRating}`
+      ? 'требуется обогащение данных: для всех ratings'
+      : `требуется обогащение данных: для ratings с оценкой ≥ ${resolvedMinRating}`
   )
 
   const cache = loadOrCreateCache(cachePaths)
@@ -1225,11 +1238,11 @@ export async function processCSVData(
   let notFound = 0
 
   if (fetchCount === 0) {
-    console.log(`[process] обогащение данных: ${cachedCount} из кэша`)
+    logProcess(`обогащение данных: ${cachedCount} из кэша`)
   } else if (!tmdbAvailable) {
-    console.log(`[process] обогащение данных: ${cachedCount} из кэша, ${fetchCount} пропущено (tmdb недоступен)`)
+    logProcess(`обогащение данных: ${cachedCount} из кэша, ${fetchCount} пропущено (tmdb недоступен)`)
   } else {
-    console.log(`[process] обогащение данных: ${cachedCount} из кэша, ${fetchCount} через TMDB`)
+    logProcess(`обогащение данных: ${cachedCount} из кэша, ${fetchCount} через TMDB`)
 
     const toFetch = toEnrich.filter(movie => movie.movieUri && !isResolvedCacheEntry(cache[cacheKey(movie.movieUri, locale)]))
     const batchDelay = Math.ceil((BATCH_SIZE * 2) / RATE_LIMIT * 1000)
@@ -1305,7 +1318,7 @@ export async function processCSVData(
       }
     }
 
-    console.log(`[process] обогащение завершено: ${exactMatch} точных, ${fuzzyMatch} неточно, ${notFound} не найдено`)
+    logProcess(`обогащение завершено: ${exactMatch} точных, ${fuzzyMatch} неточно, ${notFound} не найдено`)
   }
 
   const enrichedMovies: Movie[] = baseData.movies.map((movie) => {
@@ -1327,6 +1340,6 @@ export async function processCSVData(
 
   saveCache(cachePaths, cache)
 
-  console.log('[process] данные готовы, передаем на фронтенд')
+  logProcess('данные готовы, передаем на фронтенд')
   return buildEnrichedImportData(baseData, enrichedMovies)
 }
